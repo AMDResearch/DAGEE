@@ -27,7 +27,7 @@ for d in $(find . -type d | egrep -iv '\.git') ; do
   fi
 done
 
-for f in $(find . -type f | egrep -iv '\.git') ; do 
+for f in $(find . -type f | egrep -iv '\.git|\.swp') ; do 
   echo "Found file: $f"
   cp -af $f $REL_DIR/$f
 done
