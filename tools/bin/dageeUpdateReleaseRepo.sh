@@ -10,8 +10,8 @@
 # - git push 
 # - remove d1 and d2
 
-DEV_URL="git@gitlab1:AsyncTasking/DAGEE-examples"
-REL_URL="git@gitlab1:AsyncTasking/DAGEE-release-RO"
+DEV_URL="git@gitlab1:AsyncTasking/DAGEE-examples.git"
+REL_URL="git@gitlab1:AsyncTasking/DAGEE-release-RO.git"
 
 DEV_DIR="$HOME/projects/DAGEE-examples"
 REL_DIR="$HOME/projects/DAGEE-release-RO"
@@ -31,3 +31,7 @@ for f in $(find . -type f | egrep -iv '\.git') ; do
   echo "Found file: $f"
   cp -af $f $REL_DIR/$f
 done
+
+cd $REL_DIR
+git commit -a -m "updates on $(date +%F--%T)" 
+
