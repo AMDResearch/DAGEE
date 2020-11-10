@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
 import re
 import sys

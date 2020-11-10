@@ -1,4 +1,5 @@
 #!/bin/bash 
+# Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
 # Basic steps
 # - clone examples repo in d1
@@ -9,9 +10,6 @@
 # - git commit -a -m 'update msg'
 # - git push 
 # - remove d1 and d2
-
-DEV_URL="git@gitlab1:AsyncTasking/DAGEE-examples.git"
-REL_URL="git@gitlab1:AsyncTasking/DAGEE-release-RO.git"
 
 DEV_DIR="$HOME/projects/DAGEE-examples"
 REL_DIR="$HOME/projects/DAGEE-release-RO"

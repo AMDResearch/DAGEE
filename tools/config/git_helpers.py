@@ -1,8 +1,13 @@
 #! /usr/bin/env python3
+# Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
+#
+# Parts of this code were adapted from https://www.fullstackpython.com/blog/first-steps-gitpython.html
+# available under MIT License: # https://github.com/gitpython-developers/GitPython/blob/2.1.7/LICENSE
+# Copyright (c) 2017 Matthew Makai
 
 """git_helpers.py : Contains classes and helper funcs for build automation """
 
-__author__ = "Akhil Guliani"
+__author__ = "AMD Research"
 __copyright__   = "Copyright 2019"
 
 

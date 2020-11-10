@@ -9,7 +9,6 @@ import time
 # Check api/read_user/read_repository/write_repository and any other check boxes that may be there.
 # Click the 'Create personal access token' button
 # NOTE: the access token disappears if you go back or exit the page. So, save it to clipboard IMMEDIATELY!
-# Example of Gitlab URL: http://gitlab1.amd.com
 gl = gitlab.Gitlab('gitab_url', private_token='XXX')
 
 # Some Python commands to get a list of projects

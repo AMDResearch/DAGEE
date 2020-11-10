@@ -1,3 +1,4 @@
+// Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 #include <cstdlib>
 #include <cstdio>
 
