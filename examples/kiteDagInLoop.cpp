@@ -2,18 +2,16 @@
 
 #include "kiteDagGpu.h"
 
-#include "dagee/DeviceAlloc.h"
 #include "dagee/ATMIdagExecutor.h"
+#include "dagee/DeviceAlloc.h"
 
-#include <cstdlib>
 #include <cassert>
+#include <cstdlib>
 
 #include <iostream>
 #include <vector>
 
-
 int main(int argc, char* argv[]) {
-
   constexpr unsigned threadsPerBlock = 1024;
   constexpr unsigned blocks = 16;
 
@@ -43,15 +41,17 @@ int main(int argc, char* argv[]) {
   auto* dag = dagEx.makeDAG();
 
   auto topTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, topK, A_d, N));
-  auto leftTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, B_d, N, LEFT_ADD_VAL));
-  auto rightTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, C_d, N, RIGHT_ADD_VAL));
-  auto bottomTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N));
+  auto leftTask =
+      dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, B_d, N, LEFT_ADD_VAL));
+  auto rightTask =
+      dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, C_d, N, RIGHT_ADD_VAL));
+  auto bottomTask =
+      dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N));
 
   dag->addEdge(topTask, leftTask);
   dag->addEdge(topTask, rightTask);
   dag->addEdge(leftTask, bottomTask);
   dag->addEdge(rightTask, bottomTask);
-
 
   for (int i = 0; i < NUM_ITERATIONS; ++i) {
     dagEx.execute(dag);
@@ -76,4 +76,3 @@ int main(int argc, char* argv[]) {
     std::cout << "PASSED!\n";
   }
 }
-

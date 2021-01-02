@@ -3,45 +3,36 @@
 #ifndef CPPUTILS_INCLUDE_INCLUDE_CPPUTILS_BIT_INCLUDE_CPPUTILS_H_
 #define CPPUTILS_INCLUDE_INCLUDE_CPPUTILS_BIT_INCLUDE_CPPUTILS_H_
 
-#include <cstddef>
 #include <cassert>
+#include <cstddef>
 
 namespace cpputils {
 
 template <typename W>
 struct BitUtil {
-
   constexpr static const size_t NUM_BYTES = sizeof(W);
   constexpr static const size_t NUM_BITS = 8 * NUM_BYTES;
 
-private:
-  static void checkBitIndex(size_t idx) {
-    assert(idx < NUM_BITS && "invalid bit idx");
-  }
+ private:
+  static void checkBitIndex(size_t idx) { assert(idx < NUM_BITS && "invalid bit idx"); }
 
   static void checkBitRange(size_t lo, size_t hi) {
     checkBitIndex(lo);
     assert(hi > 0 && hi <= NUM_BITS && "invalid hi idx for range");
   }
 
-public:
+ public:
   /**
    * masks off the upper bits [idx+1:NUM_BITS) and returns the result
    */
-  static W maskUpper(const W& word, size_t idx) {
-    return word & ~(~W(0) << idx);
-  }
+  static W maskUpper(const W& word, size_t idx) { return word & ~(~W(0) << idx); }
 
   /**
    * masks off the lower bits [0..idx+1) and returns the result
    */
-  static W maskLower(const W& word, size_t idx) {
-    return word & (~W(0) << idx);
-  }
+  static W maskLower(const W& word, size_t idx) { return word & (~W(0) << idx); }
 
-  static W getLSB(const W& word) {
-    return word & W(1);
-  }
+  static W getLSB(const W& word) { return word & W(1); }
 
   static W genMask(size_t lo, size_t hi) {
     W mask = ~(~W(0) << (hi - lo));
@@ -68,7 +59,7 @@ public:
   static W getBits(const W& word, const V& bitIndices) {
     W res = 0;
     unsigned idx = 0;
-    for (auto i: bitIndices) {
+    for (auto i : bitIndices) {
       W temp = getBit(word, i);
       res = res | (temp << idx);
       ++idx;
@@ -78,7 +69,7 @@ public:
 
   static W setBitRange(const W& word, size_t lo, size_t hi) {
     checkBitRange(lo, hi);
-    return (word | genMask(lo, hi) );
+    return (word | genMask(lo, hi));
   }
 
   static W setBit(const W& word, size_t idx) {
@@ -90,7 +81,7 @@ public:
   static W setBits(const W& word, const V& bitIndices) {
     W ret = word;
 
-    for (const auto& i: bitIndices) {
+    for (const auto& i : bitIndices) {
       ret = setBit(ret, i);
     }
     return ret;
@@ -111,7 +102,7 @@ public:
   static W clearBits(const W& word, const V& bitIndices) {
     W ret = word;
 
-    for (auto i: bitIndices) {
+    for (auto i : bitIndices) {
       ret = clearBit(ret, i);
     }
     return ret;
@@ -121,7 +112,7 @@ public:
     checkBitRange(lo, hi);
     if (lo == 0) {
       return word >> hi;
-    } 
+    }
 
     W lower = getBitRange(word, 0u, lo);
     W upper = word >> (hi - lo); // shift right to move upper part to its new position
@@ -132,7 +123,34 @@ public:
   static W removeBit(const W& word, size_t idx) {
     checkBitIndex(idx);
     return removeBitRange(word, idx, idx + 1);
-    
+  }
+
+  // Instead of consuming a set of bits that should be removed, this function consumes a
+  // set of bits that should be saved. Each element of innerBitIndices represents a bitmask/range of
+  // bits that needs to be saved (and not removed) in word. Also each element of innerBitIndices
+  // represents an inner range of bits between two consecutive bits that should be removed.
+  // If we OR all elements of innerBitIndices, we get a single bitmask where 1 means save the bit
+  // and 0 means remove the bit at that location. Size of innerBitIndices is number of bits to
+  // be removed + 1.
+  // For example, if bits 3 and 5 have to be removed from an 8-bit word, a regular bitmask to
+  // represent it would look like 00101000. However, elements of innerBitIndices would be
+  // 00000111, 00010000, 11000000. If we OR these elements we would get 11010111 = ~00101000.
+  template <typename V>
+  static W removeBitsByInnerBits(const W& word, const V& innerBitIndices) {
+    W ret = W(0);
+    size_t idx = 0;
+    for (auto i : innerBitIndices) {
+      // Captures removal of bit ranges. `i` will be non-zero if bits to be removed are not
+      // adjacent. If `i` is 0, that means this bit is adjacent to another bit that was removed
+      // in the prior iteration, so there are no bits to be saved between this bit and
+      // the previous one. so do nothing but increment the shift counter.
+      if (i) {
+        // shift right depending on index of bit to be removed (idx).
+        ret |= ((word & i) >> idx);
+      }
+      idx++;
+    }
+    return ret;
   }
 
   /**
@@ -142,7 +160,7 @@ public:
   static W removeBits(const W& word, const V& bitIndices) {
     W res = word;
     size_t shiftAmt = 0;
-    for (auto i: bitIndices) {
+    for (auto i : bitIndices) {
       res = removeBit(res, i);
       /*
        * since bitIndices are sorted, removing a lower order bit changes the
@@ -150,21 +168,19 @@ public:
        * So, we left shift by 1 to make higher bitIndices valid, but ++shiftAmt to
        * remember how many zeros we added on the right and remove them
        */
-      res <<= 1; 
+      res <<= 1;
       ++shiftAmt;
     }
-    res >>= shiftAmt; //remove the zeroes we added to adjust for higher bitIndices 
+    res >>= shiftAmt; // remove the zeroes we added to adjust for higher bitIndices
     return res;
   }
-
-
 
   static W insertBitRange(const W& word, size_t lo, size_t hi) {
     checkBitRange(lo, hi);
     /*
      * algorithm: get the subsets [0:lo+1) and [lo:MSB)
      * shift upper by (hi-lo) i.e. the bit width of the range, to make space for bit range
-     * shift left insertVal by lo to bring it to align with the insert space 
+     * shift left insertVal by lo to bring it to align with the insert space
      * for  safety maskOff [MSB, hi)
      * do upper | insertVal | lower
      */
@@ -177,23 +193,37 @@ public:
 
   static W insertBit(const W& word, size_t idx) {
     checkBitIndex(idx);
-    return insertBitRange(word, idx, idx+1);
+    return insertBitRange(word, idx, idx + 1);
   }
 
-  
-  /**
-   * Assumes that bitIndices are sorted. Otherwise, insertion will be wrong because
-   * we shift left to make space for the new bits
-   */
+  // This does the opposite of removeBitsByInnerBits. It uses each element of innerBitIndices to
+  // capture the right set of bits from word and shift them appropriately to insert bits at
+  // the right locations.
   template <typename V>
-  static W insertBits(const W& word, const V& bitIndices) {
-    W ret = word;
-    for (auto i: bitIndices) {
-      ret = insertBit(ret, i);
+  static W insertBitsByInnerBits(const W& word, const V& innerBitIndices) {
+    W ret = W(0);
+    size_t idx = 0;
+    for (auto i : innerBitIndices) {
+      if (i) {
+        ret |= ((word & (i >> idx)) << idx);
+      }
+      idx++;
     }
     return ret;
   }
 
+  /**
+   * Assumes that bitIndices are sorted. Otherwise, insertion will be wrong
+   * because we shift left to make space for the new bits
+   */
+  template <typename V>
+  static W insertBits(const W& word, const V& bitIndices) {
+    W ret = word;
+    for (auto i : bitIndices) {
+      ret = insertBit(ret, i);
+    }
+    return ret;
+  }
 
   static W replaceBitRange(const W& word, size_t lo, size_t hi, const W& newVal) {
     checkBitRange(lo, hi);
@@ -216,7 +246,7 @@ public:
     W ret = word;
     W nval = newVal;
 
-    for (auto i: bitIndices) {
+    for (auto i : bitIndices) {
       ret = replaceBit(ret, i, getLSB(nval));
       nval >>= 1;
     }
@@ -226,4 +256,4 @@ public:
 
 } // end namespace cpputils
 
-#endif// CPPUTILS_INCLUDE_INCLUDE_CPPUTILS_BIT_INCLUDE_CPPUTILS_H_
+#endif // CPPUTILS_INCLUDE_INCLUDE_CPPUTILS_BIT_INCLUDE_CPPUTILS_H_

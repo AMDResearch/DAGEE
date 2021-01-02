@@ -1,15 +1,42 @@
 # DAGEE (Directed Acyclic Graph Execution Engine)
 
+DAGEE is a library for launching graphs of HIP Kernels, CPU functions and
+data-movement operations. It currently works only on AMD Hardware supported by
+ROCm.
+
 ## Prerequisites
 
-0. Make sure following packages are installed: atmi, libelf-dev, libblas-dev, liblapack-dev, rocm-dkms, rocm-dev, rocminfo, comgr,
-hip_base, hip_hcc, hsa-rocr-dev, hsa-ext-rocr-dev, rocm-smi, rocm-utils,
-rocm-device-libs, rocm-opencl-dev, hsakmt-roct-dev 
-1. Currently, DAGEE works with ROCm versions >= 2.0 and <= 3.3
+1. Currently, DAGEE works with ROCm versions >= 2.0 and <= 3.3. We will start
+   supporting latest ROCm versions in the near future.  
+2. Make sure following packages are installed (in addition to a basic ROCm installation). All these are available from ROCm DEB or RPM repos:
+
+  atmi
+  comgr
+  hcc
+  hip-base
+  hip-hcc
+  hsa-ext-rocr-dev
+  hsa-rocr-dev
+  hsakmt-roct
+  hsakmt-roct-dev
+  rocm-cmake
+  rocm-dev
+  rocm-device-libs
+  rocm-smi
+  rocm-smi-lib64
+  rocm-utils
+
+3. Optional packages
+
+  rocminfo
+  rocprofiler-dev
+  hsa-amd-aqlprofile
+  rocm-opencl
+  rocm-opencl-dev
 
 ## Building & Running
 
-Clone TaskingBenchmarks repo and update the submodules
+Clone this repository:
 
 ```
 $ git clone <this-repo's-url>
@@ -22,7 +49,7 @@ Create a build directory:
 $ mkdir build; cd build
 ```
 
-Run CMake. 
+Run CMake: 
 
 ```
 $ CXX=/opt/rocm/bin/hipcc cmake ..
@@ -44,3 +71,9 @@ To run the benchmarks:
   ./examples/kiteDagCpu
   ./examples/kiteDagGpu
 ```
+
+## Documentation
+
+## support
+This is a research project undergoing development. Please open a Github issue if
+you encounter a bug or a problem. 

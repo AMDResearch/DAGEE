@@ -3,16 +3,16 @@
 #ifndef INCLUDE_CPPUTILS_PRINT_H_
 #define INCLUDE_CPPUTILS_PRINT_H_
 
-#include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
+#include <string>
 
 namespace cpputils {
 
 template <typename O, typename... Args>
 O& print(O& out, const Args&... args) {
-  (void) (int[]) { (out << args, 0)... };
+  (void)(int[]){(out << args, 0)...};
   return out;
 }
 
@@ -40,7 +40,6 @@ std::string printStr(const Args&... args) {
   return ss.str();
 }
 
-
 /**
  * \param region is name of the application or a specific region of the application
  * \param category is the type of stat being printed
@@ -61,6 +60,6 @@ void printParam(const S1& region, const S2& category, const V& val) {
   printOut("PARAM, ", region, ", ", category, ", ", val);
 }
 
-}// end namespace cpputils
+} // end namespace cpputils
 
-#endif// INCLUDE_CPPUTILS_PRINT_H_
+#endif // INCLUDE_CPPUTILS_PRINT_H_

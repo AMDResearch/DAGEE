@@ -1,7 +1,7 @@
 // Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
-#ifndef ATMI_KITE_DAG_H
-#define ATMI_KITE_DAG_H
+#ifndef EXAMPLES_KITEDAGGPU_H_
+#define EXAMPLES_KITEDAGGPU_H_
 
 #include "hip/hip_runtime.h"
 
@@ -10,21 +10,20 @@
 
 #include <iostream>
 
-#define CHECK(cmd)                                                                                 \
-    {                                                                                              \
-        hipError_t error = cmd;                                                                    \
-        if (error != hipSuccess) {                                                                 \
-          fprintf(stderr, "error: '%s'(%d) at %s:%d\n", hipGetErrorString(error), error,           \
-              __FILE__, __LINE__);                                                                 \
-          std::abort();                                                                            \
-        }                                                                                          \
-    }
+#define CHECK(cmd)                                                                             \
+  {                                                                                            \
+    hipError_t error = cmd;                                                                    \
+    if (error != hipSuccess) {                                                                 \
+      fprintf(stderr, "error: '%s'(%d) at %s:%d\n", hipGetErrorString(error), error, __FILE__, \
+              __LINE__);                                                                       \
+      std::abort();                                                                            \
+    }                                                                                          \
+  }
 
 constexpr uint32_t INIT_VAL = 1;
 constexpr uint32_t LEFT_ADD_VAL = 2;
 constexpr uint32_t RIGHT_ADD_VAL = 3;
 constexpr uint32_t FINAL_VAL = 3 * INIT_VAL + LEFT_ADD_VAL + RIGHT_ADD_VAL;
-
 
 __global__ void topKern(uint32_t* A_d, size_t N) {
   size_t i = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
@@ -40,7 +39,7 @@ __global__ void midKern(uint32_t* A_d, uint32_t* B_d, size_t N, uint32_t addVal)
   }
 }
 
-__global__ void bottomKern(uint32_t* A_d, uint32_t*  B_d, uint32_t* C_d, size_t N) {
+__global__ void bottomKern(uint32_t* A_d, uint32_t* B_d, uint32_t* C_d, size_t N) {
   size_t i = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
   if (i < N) {
     A_d[i] = A_d[i] + B_d[i] + C_d[i];
@@ -67,5 +66,4 @@ void checkOutput(const V& A) {
   }
 }
 
-
-#endif// ATMI_KITE_DAG_H
+#endif // EXAMPLES_KITEDAGGPU_H_

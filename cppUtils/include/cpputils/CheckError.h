@@ -7,15 +7,14 @@
 
 #include <cmath>
 
-#include <iostream>
 #include <cassert>
-
+#include <iostream>
 
 namespace cpputils {
 
 template <typename... Args>
 void failIf(const bool cond, const Args&... args) {
-  if (cond) { 
+  if (cond) {
     cpputils::printErr(args...);
     std::abort();
   }
@@ -23,10 +22,9 @@ void failIf(const bool cond, const Args&... args) {
 
 template <typename T>
 struct AbsoluteError {
-
   const T threshold;
 
-  bool operator() (const T& refVal, const T& measured) const {
+  bool operator()(const T& refVal, const T& measured) const {
     if (std::fabs(measured - refVal) > std::fabs(threshold)) {
       return true;
     }
@@ -36,11 +34,9 @@ struct AbsoluteError {
 
 template <typename T>
 struct RelativeError {
-
   const T threshold;
 
-  bool operator() (const T& refVal, const T& measured) const {
-
+  bool operator()(const T& refVal, const T& measured) const {
     T relErr = (measured - refVal) / refVal;
     if (std::fabs(relErr) > std::fabs(threshold)) {
       return true;
@@ -49,8 +45,6 @@ struct RelativeError {
   }
 };
 
+} // end namespace cpputils
 
-}// end namespace cpputils
-
-
-#endif// INCLUDE_CPPUTILS_CHECK_ERROR_H_
+#endif // INCLUDE_CPPUTILS_CHECK_ERROR_H_

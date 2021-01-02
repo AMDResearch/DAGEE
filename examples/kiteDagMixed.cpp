@@ -48,8 +48,7 @@ void checkOutput(const V& A) {
   for (const auto& e : A) {
     if (e != EXPECTED) {
       correct = false;
-      std::fprintf(stderr, "Wrong value %d at index %zd. Expected %d\n", e,
-                   index, EXPECTED);
+      std::fprintf(stderr, "Wrong value %d at index %zd. Expected %d\n", e, index, EXPECTED);
     }
     ++index;
   }
@@ -68,7 +67,6 @@ void sharedMemKiteDag() {
   dagee::CpuExecutorAtmi cpuEx;
   dagee::GpuExecutorAtmi gpuEx;
 
-
   dagee::AllocManagerAtmi buf;
   auto* A_h = buf.makeSharedCopy(A);
 
@@ -80,14 +78,14 @@ void sharedMemKiteDag() {
     std::cout << "\nLaunching one kernel at a time\n";
     auto topTask = cpuEx.launchTask(cpuEx.makeTask(NUM_CPU_THREADS, topCpuK, A_h, N));
 
-    auto leftTask = gpuEx.launchTask(
-        gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_h, N / 2), {topTask});
+    auto leftTask =
+        gpuEx.launchTask(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_h, N / 2), {topTask});
 
     auto rightTask = gpuEx.launchTask(
         gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_h[N / 2], N), {topTask});
 
-    auto bottomTask = cpuEx.launchTask(
-        cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N), {leftTask, rightTask});
+    auto bottomTask = cpuEx.launchTask(cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N),
+                                       {leftTask, rightTask});
     cpuEx.waitOnTask(bottomTask);
 
   } else {
@@ -97,8 +95,9 @@ void sharedMemKiteDag() {
     auto* dag = dagEx.makeDAG();
 
     auto topTask = dag->addNode(cpuEx.makeTask(NUM_CPU_THREADS, topCpuK, A_h, N));
-    auto leftTask = dag->addNode( gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_h, N / 2));
-    auto rightTask = dag->addNode( gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_h[N / 2], N));
+    auto leftTask = dag->addNode(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_h, N / 2));
+    auto rightTask =
+        dag->addNode(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_h[N / 2], N));
     auto bottomTask = dag->addNode(cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N));
 
     dag->addFanOutEdges(topTask, {leftTask, rightTask});
@@ -111,7 +110,7 @@ void sharedMemKiteDag() {
   checkOutput(A);
 }
 
-template<bool DYNAMIC_LAUNCH>
+template <bool DYNAMIC_LAUNCH>
 void memcpyKiteDag() {
   std::vector<uint32_t> A(N, 0);
 
@@ -124,7 +123,6 @@ void memcpyKiteDag() {
   auto* A_h = A.data();
   auto* A_d = buf.makeDeviceCopy(A);
 
-
   auto topCpuK = cpuEx.registerKernel<uint32_t*, size_t>(&topKernCpu);
   auto midGpuK = gpuEx.registerKernel<uint32_t*, size_t>(&midKernGpu);
   auto bottomCpuK = cpuEx.registerKernel<uint32_t*, size_t>(&bottomKernCpu);
@@ -135,13 +133,16 @@ void memcpyKiteDag() {
 
     auto h2dCopyTask = memEx.launchTask(memEx.makeTask(A_h, A_d, N), {topTask});
 
-    auto leftTask = gpuEx.launchTask(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_d, N / 2), {h2dCopyTask});
+    auto leftTask = gpuEx.launchTask(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_d, N / 2),
+                                     {h2dCopyTask});
 
-    auto rightTask = gpuEx.launchTask(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_d[N / 2], N), {h2dCopyTask});
+    auto rightTask = gpuEx.launchTask(
+        gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_d[N / 2], N), {h2dCopyTask});
 
     auto d2hCopyTask = memEx.launchTask(memEx.makeTask(A_d, A_h, N), {leftTask, rightTask});
 
-    auto bottomTask = cpuEx.launchTask(cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N), {d2hCopyTask});
+    auto bottomTask =
+        cpuEx.launchTask(cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N), {d2hCopyTask});
     cpuEx.waitOnTask(bottomTask);
 
   } else {
@@ -153,7 +154,8 @@ void memcpyKiteDag() {
     auto topTask = dag->addNode(cpuEx.makeTask(NUM_CPU_THREADS, topCpuK, A_h, N));
     auto h2dCopyTask = dag->addNode(memEx.makeTask(A_h, A_d, N));
     auto leftTask = dag->addNode(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, A_d, N / 2));
-    auto rightTask = dag->addNode(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_d[N / 2], N));
+    auto rightTask =
+        dag->addNode(gpuEx.makeTask(BLOCKS, THREADS_PER_BLOCK, midGpuK, &A_d[N / 2], N));
     auto d2hCopyTask = dag->addNode(memEx.makeTask(A_d, A_h, N));
     auto bottomTask = dag->addNode(cpuEx.makeTask(NUM_CPU_THREADS, bottomCpuK, A_h, N));
 

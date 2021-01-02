@@ -3,19 +3,19 @@
 #ifndef INCLUDE_CPPUTILS_STRING_H_ELPER_H_
 #define INCLUDE_CPPUTILS_STRING_H_ELPER_H_
 
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace cpputils {
 template <typename C>
-void splitCSVstr(const std::string& inputStr, C& output, const char delim=',') {
+void splitCSVstr(const std::string& inputStr, C& output, const char delim = ',') {
   std::stringstream ss(inputStr);
 
-  for (std::string item; std::getline(ss, item, delim); ) {
+  for (std::string item; std::getline(ss, item, delim);) {
     output.push_back(item);
   }
 }
 
 } // end namespace cpputils
-#endif// INCLUDE_CPPUTILS_STRING_H_ELPER_H_
+#endif // INCLUDE_CPPUTILS_STRING_H_ELPER_H_

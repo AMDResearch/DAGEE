@@ -17,10 +17,9 @@
 namespace cpputils {
 
 // TODO: add functionality to convert to symmetric
-template <typename I=uint32_t, typename E=double>
+template <typename I = uint32_t, typename E = double>
 class GenericSparseMatrix {
-
-protected:
+ protected:
   size_t m_numNodes = 0;
   size_t m_numEdges = 0;
 
@@ -29,9 +28,7 @@ protected:
 
   std::vector<AdjVec> m_adjVecs;
 
-
   void alloc(size_t numNodes, size_t numEdges) {
-
     m_numNodes = numNodes;
     m_numEdges = numEdges;
 
@@ -53,15 +50,12 @@ protected:
     ls >> third;
   }
 
-
-public:
-
+ public:
   using adjIterator = typename AdjVec::iterator;
   using const_adjIterator = typename AdjVec::const_iterator;
 
   size_t numNodes(void) const { return m_numNodes; }
   size_t numEdges(void) const { return m_numEdges; }
-
 
   adjIterator adjBegin(size_t i) {
     assert(i < numNodes() && "adjBegin: index out of bound");
@@ -83,25 +77,15 @@ public:
     return m_adjVecs[i].cend();
   }
 
-  I& edgeDst(adjIterator i) {
-    return i->first;
-  }
+  I& edgeDst(adjIterator i) { return i->first; }
 
-  const I& edgeDst(const_adjIterator i) const {
-    return i->first;
-  }
+  const I& edgeDst(const_adjIterator i) const { return i->first; }
 
-  E& edgeData(adjIterator i) {
-    return i->second;
-  }
+  E& edgeData(adjIterator i) { return i->second; }
 
-  const E& edgeData(const_adjIterator i) const {
-    return i->second;
-  }
-  
+  const E& edgeData(const_adjIterator i) const { return i->second; }
 
   void readMatrixMarket(const std::string& fileName) {
-
     constexpr char MATRIX_MARKET_COMMENT = '%';
 
     std::ifstream ifs(fileName);
@@ -111,9 +95,8 @@ public:
     bool first = true;
 
     for (std::string line; std::getline(ifs, line);) {
-
       if (line[0] == MATRIX_MARKET_COMMENT) {
-        continue; 
+        continue;
       }
 
       if (first) {
@@ -123,9 +106,7 @@ public:
         size_t dstNodes = 0;
         size_t numEdges = 0;
 
-
         readTriple(line, srcNodes, dstNodes, numEdges);
-
 
         assert(srcNodes > 0);
         assert(dstNodes > 0);
@@ -135,14 +116,13 @@ public:
         this->alloc(numNodes, numEdges);
 
       } else {
-
         I src = 0;
         I dst = 0;
         E ed = 0;
 
         readTriple(line, src, dst, ed);
 
-        this->addEdge(src-1, dst-1, ed);
+        this->addEdge(src - 1, dst - 1, ed);
       }
     }
   }
@@ -162,20 +142,13 @@ public:
   GenericSparseMatrix transpose(void) const {
     // TODO
   }
-
 };
 
-enum class SpMat {
-  CSR=0, CSC
-};
+enum class SpMat { CSR = 0, CSC };
 
-
-
-template <typename I=uint32_t, typename E=double>
+template <typename I = uint32_t, typename E = double>
 class CompressedMatrix {
-
-protected:
-
+ protected:
   size_t m_numNodes = 0;
   size_t m_numEdges = 0;
 
@@ -184,7 +157,6 @@ protected:
   std::vector<E> m_edgeData;
 
   void alloc(size_t numNodes, size_t numEdges) {
-
     m_numNodes = numNodes;
     m_numEdges = numEdges;
 
@@ -204,7 +176,7 @@ protected:
 
   // using IndexAlloc = std::allocator<I>;
   // using EdgeAlloc = std::allocator<E>;
-// 
+  //
   // I* m_index = nullptr;
   // I* m_adj = nullptr;
   // E* m_edgeData = nullptr;
@@ -213,26 +185,26 @@ protected:
   // EdgeAlloc m_edgeAlloc;
 
   // void alloc(size_t numNodes, size_t numEdges) {
-// 
-    // m_numNodes = numNodes;
-    // m_numEdges = numEdges;
-// 
-    // m_index = m_indexAlloc.allocate(m_numNodes + 1);
-    // m_adj = m_indexAlloc.allocate(m_numEdges);
-    // m_edgeData = m_edgeAlloc.allocate(m_numEdges);
+  //
+  // m_numNodes = numNodes;
+  // m_numEdges = numEdges;
+  //
+  // m_index = m_indexAlloc.allocate(m_numNodes + 1);
+  // m_adj = m_indexAlloc.allocate(m_numEdges);
+  // m_edgeData = m_edgeAlloc.allocate(m_numEdges);
   // }
-// 
+  //
   // void dealloc() {
-    // m_indexAlloc.deallocate(m_index, m_numNodes + 1);
-    // m_indexAlloc.deallocate(m_adj, m_numEdges);
-    // m_edgeAlloc.deallocate(m_edgeData, m_numEdges);
-// 
-    // m_numNodes = 0ul;
-    // m_numEdges = 0ul;
-// 
-    // m_index = nullptr;
-    // m_adj = nullptr;
-    // m_edgeData = nullptr;
+  // m_indexAlloc.deallocate(m_index, m_numNodes + 1);
+  // m_indexAlloc.deallocate(m_adj, m_numEdges);
+  // m_edgeAlloc.deallocate(m_edgeData, m_numEdges);
+  //
+  // m_numNodes = 0ul;
+  // m_numEdges = 0ul;
+  //
+  // m_index = nullptr;
+  // m_adj = nullptr;
+  // m_edgeData = nullptr;
   // }
 
   /*
@@ -258,22 +230,20 @@ protected:
       m_index[i+1] = adjSize;
     }
 
-    assert(edgeIndex == m_numEdges && "CompressedMatrix::copyFrom: Didn't copy right amount of edges");
+    assert(edgeIndex == m_numEdges && "CompressedMatrix::copyFrom: Didn't copy right amount of
+  edges");
   }
   */
 
   template <typename _I1, typename _E1>
   void copyFrom(const GenericSparseMatrix<_I1, _E1>& spMat) {
-
     alloc(spMat.numNodes(), spMat.numEdges());
 
     m_index.push_back(0);
     for (size_t i = 0; i < spMat.numNodes(); ++i) {
-
       I adjSize = m_index[i];
 
       for (auto e = spMat.adjBegin(i), end_e = spMat.adjEnd(i); e != end_e; ++e) {
-
         m_adj.push_back(spMat.edgeDst(e));
         m_edgeData.push_back(spMat.edgeData(e));
 
@@ -287,7 +257,6 @@ protected:
     assert(m_adj.size() == numEdges() && "copyFrom: wrong number of edges");
     assert(m_edgeData.size() == numEdges() && "copyFrom: wrong number of edges");
   }
-
 
   template <typename Ret>
   Ret adjBeginImpl(const I& src) {
@@ -313,8 +282,7 @@ protected:
     return m_edgeData[*iter];
   }
 
-public:
-
+ public:
   using adjIterator = boost::counting_iterator<uint64_t>;
   using const_adjIterator = boost::counting_iterator<uint64_t>;
 
@@ -323,46 +291,35 @@ public:
     copyFrom(spMat);
   }
 
-  ~CompressedMatrix(void) {
-    dealloc();
-  }
+  ~CompressedMatrix(void) { dealloc(); }
 
   size_t numNodes(void) const { return m_numNodes; }
   size_t numEdges(void) const { return m_numEdges; }
 
-  adjIterator adjBegin(const I& src) {
-    return adjBeginImpl<adjIterator>(src);
-  }
+  adjIterator adjBegin(const I& src) { return adjBeginImpl<adjIterator>(src); }
 
   const_adjIterator adjBegin(const I& src) const {
     return const_cast<CompressedMatrix*>(this)->adjBeginImpl<const_adjIterator>(src);
   }
 
-  adjIterator adjEnd(const I& src) {
-    return adjEndImpl<adjIterator>(src);
-  }
+  adjIterator adjEnd(const I& src) { return adjEndImpl<adjIterator>(src); }
 
   const_adjIterator adjEnd(const I& src) const {
     return const_cast<CompressedMatrix*>(this)->adjEndImpl<const_adjIterator>(src);
   }
 
-  I& edgeDst(adjIterator i) {
-    return edgeDstImpl<I>(i);
-  }
+  I& edgeDst(adjIterator i) { return edgeDstImpl<I>(i); }
 
   const I& edgeDst(const_adjIterator i) const {
     return const_cast<CompressedMatrix*>(this)->edgeDstImpl<const I>(i);
   }
 
-  E& edgeData(adjIterator i) {
-    return edgeDataImpl<E>(i);
-  }
+  E& edgeData(adjIterator i) { return edgeDataImpl<E>(i); }
 
   const E& edgeData(const_adjIterator i) const {
     return const_cast<CompressedMatrix*>(this)->edgeDataImpl<const E>(i);
   }
 };
 
-
 } // end namespace cpputils
-#endif// INCLUDE_CPPUTILS_SPARSE_MATRX_H_
+#endif // INCLUDE_CPPUTILS_SPARSE_MATRX_H_

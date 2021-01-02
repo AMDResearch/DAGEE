@@ -1,23 +1,17 @@
 // Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
 
 #include <unistd.h>
 
 #include "util/Timer.h"
 
-void doSleep(int sec) {
-  sleep(sec);
-}
+void doSleep(int sec) { sleep(sec); }
 
-void doUsleep(int microSec) {
-  usleep(microSec);
-}
-
+void doUsleep(int microSec) { usleep(microSec); }
 
 int main(int argc, char* argv[]) {
-
-  if (argc != 2) { 
+  if (argc != 2) {
     std::abort();
   }
 
@@ -25,8 +19,7 @@ int main(int argc, char* argv[]) {
 
   constexpr const bool USE_MICRO_SECONDS = true;
 
-  if (USE_MICRO_SECONDS) { 
-
+  if (USE_MICRO_SECONDS) {
     util::CppTimer<> cppTimer("CPP", "usleep", true);
     doUsleep(inputDuration);
     cppTimer.stop();
@@ -36,7 +29,6 @@ int main(int argc, char* argv[]) {
     cTimer.stop();
 
   } else {
-
     util::CppTimer<> cppTimer("CPP", "sleep", true);
     doSleep(inputDuration);
     cppTimer.stop();

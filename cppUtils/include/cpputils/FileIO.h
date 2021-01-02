@@ -3,14 +3,15 @@
 #ifndef INCLUDE_CPPUTILS_FILE_IO_H_
 #define INCLUDE_CPPUTILS_FILE_IO_H_
 
+#include <fstream>
 #include <iostream>
 #include <vector>
-#include <fstream>
 
 namespace cpputils {
 
 template <typename I>
-void writeToFile(const std::string& filename, const I beg, const I end, const char* const sep=" ") {
+void writeToFile(const std::string& filename, const I beg, const I end,
+                 const char* const sep = " ") {
   std::ofstream fs(filename);
 
   if (fs.good()) {
@@ -23,7 +24,6 @@ void writeToFile(const std::string& filename, const I beg, const I end, const ch
   fs << std::endl;
 }
 
+} // end namespace cpputils
 
-}// end namespace cpputils
-
-#endif// INCLUDE_CPPUTILS_FILE_IO_H_
+#endif // INCLUDE_CPPUTILS_FILE_IO_H_

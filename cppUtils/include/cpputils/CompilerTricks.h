@@ -8,6 +8,6 @@ namespace cpputils {
 template <typename T>
 void unusedVar(const T&) {}
 
-}// end namespace cpputils
+} // end namespace cpputils
 
-#endif// INCLUDE_CPPUTILS_COMPILER_TRICKS_H_
+#endif // INCLUDE_CPPUTILS_COMPILER_TRICKS_H_

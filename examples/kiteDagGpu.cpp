@@ -8,6 +8,8 @@
 #include <cassert>
 #include <cstdlib>
 
+#include <vector>
+
 template <bool LAUNCH_KERNELS_INDIVIDUALLY>
 void kiteDag() {
   constexpr unsigned threadsPerBlock = 1024;
@@ -49,7 +51,7 @@ void kiteDag() {
         gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, C_d, N, RIGHT_ADD_VAL), {topTask});
 
     auto bottomTask = gpuEx.launchTask(
-            gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N), {leftTask, rightTask});
+        gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N), {leftTask, rightTask});
     gpuEx.waitOnTask(bottomTask);
 
   } else {
@@ -59,9 +61,12 @@ void kiteDag() {
     auto* dag = dagEx.makeDAG();
 
     auto topTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, topK, A_d, N));
-    auto leftTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, B_d, N, LEFT_ADD_VAL));
-    auto rightTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, C_d, N, RIGHT_ADD_VAL));
-    auto bottomTask = dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N));
+    auto leftTask =
+        dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, B_d, N, LEFT_ADD_VAL));
+    auto rightTask =
+        dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, midK, A_d, C_d, N, RIGHT_ADD_VAL));
+    auto bottomTask =
+        dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N));
 
     dag->addFanOutEdges(topTask, {rightTask, leftTask});
     dag->addFanInEdges({rightTask, leftTask}, bottomTask);

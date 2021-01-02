@@ -47,17 +47,19 @@ void test() {
 
   auto topK = cpuEx.registerKernel<uint32_t*, size_t>(&topKernCpu);
   auto midK = cpuEx.registerKernel<uint32_t*, uint32_t*, size_t, uint32_t>(&midKernCpu);
-  auto bottomK =
-      cpuEx.registerKernel<uint32_t*, uint32_t*, uint32_t*, size_t>(&bottomKernCpu);
+  auto bottomK = cpuEx.registerKernel<uint32_t*, uint32_t*, uint32_t*, size_t>(&bottomKernCpu);
 
   if (DYNAMIC_LAUNCH) {
     std::cout << "Running CPU kernels synchronously one at a time\n";
     auto topTask = cpuEx.launchTask(cpuEx.makeTask(numThreads, topK, A_h, N));
 
-    auto leftTask = cpuEx.launchTask(cpuEx.makeTask(numThreads, midK, A_h, B_h, N, LEFT_ADD_VAL), {topTask});
-    auto rightTask = cpuEx.launchTask(cpuEx.makeTask(numThreads, midK, A_h, C_h, N, RIGHT_ADD_VAL), {topTask});
+    auto leftTask =
+        cpuEx.launchTask(cpuEx.makeTask(numThreads, midK, A_h, B_h, N, LEFT_ADD_VAL), {topTask});
+    auto rightTask =
+        cpuEx.launchTask(cpuEx.makeTask(numThreads, midK, A_h, C_h, N, RIGHT_ADD_VAL), {topTask});
 
-    auto bottomTask = cpuEx.launchTask(cpuEx.makeTask(numThreads, bottomK, A_h, B_h, C_h, N), {leftTask, rightTask});
+    auto bottomTask = cpuEx.launchTask(cpuEx.makeTask(numThreads, bottomK, A_h, B_h, C_h, N),
+                                       {leftTask, rightTask});
     cpuEx.waitOnTask(bottomTask);
 
   } else {
@@ -66,12 +68,9 @@ void test() {
     auto* dag = dagEx.makeDAG();
 
     auto topTask = dag->addNode(cpuEx.makeTask(numThreads, topK, A_h, N));
-    auto leftTask =
-        dag->addNode(cpuEx.makeTask(numThreads, midK, A_h, B_h, N, LEFT_ADD_VAL));
-    auto rightTask =
-        dag->addNode(cpuEx.makeTask(numThreads, midK, A_h, C_h, N, RIGHT_ADD_VAL));
-    auto bottomTask =
-        dag->addNode(cpuEx.makeTask(numThreads, bottomK, A_h, B_h, C_h, N));
+    auto leftTask = dag->addNode(cpuEx.makeTask(numThreads, midK, A_h, B_h, N, LEFT_ADD_VAL));
+    auto rightTask = dag->addNode(cpuEx.makeTask(numThreads, midK, A_h, C_h, N, RIGHT_ADD_VAL));
+    auto bottomTask = dag->addNode(cpuEx.makeTask(numThreads, bottomK, A_h, B_h, C_h, N));
 
     dag->addFanOutEdges(topTask, {leftTask, rightTask});
     dag->addFanInEdges({leftTask, rightTask}, bottomTask);
