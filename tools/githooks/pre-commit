@@ -1,0 +1,58 @@
+#!/bin/bash
+
+STYLE=$(git config --get hooks.clangformat.style)
+if [ -n "${STYLE}" ] ; then
+  STYLEARG="-style=${STYLE}"
+else
+  STYLEARG=""
+fi
+
+CLANG_FORMAT=$(which clang-format)
+if [ $? -ne 0 ]; then 
+  echo "clang-format not found." >&2
+  exit 1
+fi
+
+CPPLINT=$(which cpplint)
+if [ $? -ne 0 ]; then
+  echo "cpplint not found." >&2
+  exit 1
+fi
+
+function format_file {
+  file="${1}"
+  if [ -f $file ]; then
+    # echo "clang-format -i ${STYLEARG} ${1}"
+    $CLANG_FORMAT -i ${STYLEARG} ${1}
+    # echo "git add ${1}"
+    git add ${1}
+  fi
+}
+
+function lint_file {
+  file="${1}"
+  CPPLINTARGS="--filter=-legal/copyright,-build/include_subdir,-build/c++11,-build/include_order,-runtime/references --quiet"
+  if [ -f $file ]; then
+    # echo "cpplint ${CPPLINTARGS} ${1}"
+    $CPPLINT ${CPPLINTARGS} ${1}
+    if [ $? -ne 0 ]
+    then
+      echo "Edit ${file} to the recommended coding guidelines before committing your change." >&2
+      exit 1
+    fi
+  fi
+}
+
+case "${1}" in
+  --about )
+    echo "Runs clang-format and cpplint on source files"
+    ;;
+  * )
+    for file in $(git diff-index --cached --name-only HEAD | grep -iE '\.(cpp|cc|h|hpp|c\>|cl|cu)' ) ; do
+      # echo "Will run clang-format on ${file}"
+      format_file "${file}"
+      # echo "Will run cpplint on ${file}"
+      lint_file "${file}"
+    done
+    ;;
+esac
