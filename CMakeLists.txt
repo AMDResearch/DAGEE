@@ -23,7 +23,7 @@ endif()
 include(cmakeUtils/addATMI.cmake)
 include(cmakeUtils/rocmVersion.cmake)
 
-defineCMakeVar(DAGEE_ROOT "DAGEE")
+defineCMakeVar(DAGEE_ROOT "DAGEE-lib")
 
 if(DAGEE_ROOT) 
   include_directories(${DAGEE_ROOT}/include)
