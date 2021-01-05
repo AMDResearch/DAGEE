@@ -2,7 +2,8 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(DAGEE-examples)
+project(DAGEE-examples
+  VERSION 0.1)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -32,3 +33,10 @@ endif()
 include_directories(cppUtils/include)
 
 add_subdirectory(examples)
+
+################ doxygen documentation cmake setup ############
+# list all the dirs for doxygen documentaiton
+set(DOXYFILE_SOURCE_DIRS "\"${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_SOURCE_DIR}/doc ${CMAKE_CURRENT_SOURCE_DIR}/examples ${CMAKE_CURRENT_SOURCE_DIR}/DAGEE-lib ${CMAKE_CURRENT_SOURCE_DIR}/cppUtils/\"")
+
+include(cmakeUtils/runDoxygen.cmake)
+

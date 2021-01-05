@@ -26,7 +26,6 @@ void kiteDag() {
   using GpuExec = dagee::GpuExecutorAtmi;
   using DagExec = dagee::ATMIdagExecutor<GpuExec>;
 
-  GpuExec gpuEx;
 
   dagee::AllocManagerAtmi dbuf;
 
@@ -34,12 +33,16 @@ void kiteDag() {
   auto B_d = dbuf.makeDeviceCopy(B);
   auto C_d = dbuf.makeDeviceCopy(C);
 
+  //![Eager Launch]
+
+  GpuExec gpuEx;
+
   auto topK = gpuEx.registerKernel<uint32_t*, size_t>(&topKern);
   auto midK = gpuEx.registerKernel<uint32_t*, uint32_t*, size_t, uint32_t>(&midKern);
   auto bottomK = gpuEx.registerKernel<uint32_t*, uint32_t*, uint32_t*, size_t>(&bottomKern);
 
   if (LAUNCH_KERNELS_INDIVIDUALLY) {
-    std::cout << "Running kernels synchronously one at a time\n";
+    std::cout << "Launching kernels individually\n";
 
     auto topTask = gpuEx.launchTask(gpuEx.makeTask(blocks, threadsPerBlock, topK, A_d, N));
 
@@ -53,6 +56,7 @@ void kiteDag() {
     auto bottomTask = gpuEx.launchTask(
         gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N), {leftTask, rightTask});
     gpuEx.waitOnTask(bottomTask);
+  //![Eager Launch]
 
   } else {
     std::cout << "Building Kite DAG\n";

@@ -1,5 +1,8 @@
 # Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
+add_executable(kiteDagSimple kiteDagSimple.cpp)
+buildWithATMI(kiteDagSimple)
+
 add_executable(kiteDagGpu kiteDagGpu.cpp)
 buildWithATMI(kiteDagGpu)
 

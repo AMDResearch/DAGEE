@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(cppTasking)
+project(DAGEE-lib)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)

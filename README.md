@@ -73,6 +73,7 @@ To run the benchmarks:
 ```
 
 ## Documentation
+We use Doxygen via `make doc` in the build directory to generate API documentation and a basic tutorial for DAGEE. 
 
 ## support
 This is a research project undergoing development. Please open a Github issue if
