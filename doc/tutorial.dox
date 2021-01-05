@@ -1,0 +1,162 @@
+/**
+\page tutorial Tutorial
+
+\tableofcontents
+
+# Introduction
+
+DAGEE (Directed Acyclic Graph Execution Engine) is a C++ library that allows
+programmers to dispatch kernels on to GPUs (and CPUs) as Task Graphs. 
+
+The programmers express their algorithms as a dependency graph (or a Task Graph)
+where nodes are instances of kernels, while
+edges capture the dependencies between kernel calls (referred to here as kernel instances). 
+
+These task graphs often satisfy the **directed** and **acyclic** properties, hence
+the name Task DAGs. 
+
+It is beneficial to express the algorithm as a task DAG in certain scenarios. For
+example: 
+  - If the dependencies between kernel invocations are known beforehand, using a
+    task DAG enables more efficient choices in terms of how dependencies are
+    resolved, how tasks are scheduled, how task resources are managed, etc. 
+    - The effect of such choices is particularly apparent in algorithms where the
+      same DAG structure is used across multiple iterations
+  - Certain irregular algorithms, such as sparse computations, graph analytics,
+    mesh computations, etc. can utilize parallel hardware (CPUs and GPUs) better if
+    the algorithm is encoded as a DAG of small kernel invocations. This goes
+    against the conventional wisdom of launching fewer large kernels that try to
+    occupy GPU resources maximally. 
+
+# Helloworld example
+
+Following is an example of basic DAGEE usage where we launch a diamond shaped DAG
+with 4 kernel instances (taken from
+[examples/kiteDagSimple.cpp](github.com/AMDResearch/DAGEE/examples/kiteDagSimple.cpp)). 
+
+@snippet examples/kiteDagSimple.cpp DAGEE helloworld
+
+Here are the important steps involved in DAGEE usage: 
+  1. We create a GPU Executor `gpuEx` and register 3 HIP kernels with this executor. 
+  2. We create a DAG Executor `dagEx` based on the `gpuEx`. This means that our DAG
+  executor will create DAGs that contain instances of GPU kernels only. Also, in
+  this instance, `gpuEx` is an underlying executor of `dagEx`. 
+  an underlying exe
+  3. We create a DAG instance `dag` using `dagEx.makeDAG()`
+  4. We add nodes to the DAG via `dag->addNode()`. We populate each node with a
+  kernel instance that we create via `gpuEx->makeTask()`. Notice the use of
+  underlying GPU executor here as only the GPU executor knows how to create GPU
+  kernel instances. The arguments to `makeTask()` are similar to a HIP kernel
+  launch call. 
+  5. We add dependency edges to the DAG via `dag->addEdge()`. These edges are
+  directed, from source node to destination node, specified in that order. 
+  6. Finally, we execute the DAG using `dagEx->execute(dag)`. 
+
+# Features 
+
+The key features supported by DAGEE are: 
+
+- Launch compute tasks: GPU tasks (HIP kernels), CPU tasks (CPU kernels, i.e., CPU functions launched with a thread config) 
+- Launch data-copy tasks
+- Asynchronous concurrent execution: our runtime unfolds a
+  task DAG on the go and concurrently launches tasks whose dependencies have been
+  satisfied. This leads to a concurrent asynchronous execution of tasks. 
+- Support for **Lazy Task Launch** using DAGs as well as **Eager Task Launch**. See further discussion on this below. 
+- Ability to reuse DAGs. Currently limited to DAGs where it is reused without any changes. 
+- Ability to mix CPU, GPU and data-copy tasks in a single DAG, or alternatively,
+  create DAGs with a single type of tasks.
+- Limited ability to launch **Device-side Tasks** where a GPU task launches another
+  GPU task during execution. This feature will being refined in the future
+  releases.
+
+# Concepts
+
+## Executors
+
+An Executor is an object responsible for launching tasks to a certain hardware
+resource. We associate task types with Executors in a 1:1 fashion. 
+
+Certain executors, such as, DAG executors are *meta* executors in DAGEE that wrap
+around other executors, such as, CPU or GPU executors. 
+
+## Kernel Handles 
+
+Users must register compute kernels with an appropriate executor type via
+`registerKernel()` method. This call returns a kernel handle, which is later on
+used to create tasks in DAGEE. The template arguments to `registerKernel` must
+match the type signature of formal parameters of the kernel function.
+ - GPU executors accept HIP kernels 
+ - CPU executors accept ordinary functions
+ - A kernel handle created with one instance of an executor cannot be used with
+   another executor instance.
+
+## Task Instances
+
+Executors provide `makeTask()` method that allows creating task instances (or
+simply tasks), e.g.,
+kernel instances or data-copy instances. The signature of `makeTask()` can be
+specific to Executor (and underlying hardware resource). For example, `makeTask()`
+for GPU executors expects a kernel handle, launch sizes and kernel arguments,
+  while, `makeTask()` for data-copy executor expects pointers to source and
+    destination buffers. 
+
+## Task DAGs
+
+DAG executor in DAGEE allows creating task DAGs. A DAG executor is created using
+one or more *core* executors that represent various hardware accelerators, such as
+GPUs and CPUs. Users can only add tasks using these executors that were registered
+with the DAG executor at the time of creation. 
+
+One can add nodes and edges to a DAG incrementally using `addNode()` and
+`addEdge()` methods. One can create multiple DAGs using a DAG executor. 
+Nodes from one DAG cannot be used with another DAG. 
+
+A DAG is executed via `execute()` method of the DAG Executor. Currently `execute()`
+method is blocking, i.e., the control doesn't return until the DAG execution has
+completed. We might support non-blocking `execute()` calls in the future. 
+We allow the ability to reuse a DAG by invoking `execute()` method
+multiple times, as long as there are no changes to the DAG. We are exploring other
+DAG reuse patterns where the user may change the DAG in limited manners between
+each reuse. 
+
+# Launch Mechanisms
+
+## Lazy Launch
+
+A Lazy Launch is where the user specifies the tasks and dependencies upfront, by
+creating a DAG, before any tasks are launched. This mechanism can be more efficient
+as it decouples task creation from task launch and allows important algorithmic
+patterns, such as, reusing DAGs. 
+
+## Eager Launch
+
+An eager launch is where the user creates and launches the tasks in one apparent
+step by specifying dependencies at the time of task creation. This pattern is
+useful for more complex and irregular algorithms where the dependencies are not
+known beforehand. An example of this is in
+[examples/kiteDagGpu.cpp](examples/kiteDagGpu.cpp):
+
+@snippet examples/kiteDagGpu.cpp Eager Launch
+
+In the example above, we use the `launchTask()` method to asynchronously launch a
+GPU kernel task. `launchTask()` is non-blocking. The first argument a task instance
+returned by `makeTask()` method. The second argument, which is optional, is a list
+of predecessor tasks that this task must wait for. 
+
+A user can create an implicit DAG using `launchTask()` API. Since `launchTask()`
+is non-blocking, the user must wait for completion of the tasks at the bottom of
+the DAG (also known as *sink* tasks in a DAG, that have no outgoing edges). Users
+can achieve this by invoking `gpuEx.waitOnTask()`. There's also a variant
+`waitOnTasks()` that takes a list of *sink* tasks as the argument.
+
+
+# Limitations
+- Currently DAGEE classes and functions are not thread-safe. 
+- See top level README.md for ROCm version and library dependencies. 
+
+
+
+
+
+
+*/
