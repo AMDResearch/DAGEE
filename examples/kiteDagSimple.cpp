@@ -55,7 +55,7 @@ int main(int, char**) {
       dag->addNode(gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N));
 
   dag->addEdge(topTask, leftTask);
-  dag->addEdge(topTask, rightTask)
+  dag->addEdge(topTask, rightTask);
   dag->addEdge(leftTask, bottomTask);
   dag->addEdge(rightTask, bottomTask);
 
