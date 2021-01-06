@@ -7,7 +7,7 @@ defineCMakeVar(GFX_VER gfx900)
 # defineCMakeVar(ROCM_DEVICE_LIBS ${AMD_LLVM})
 
 defineCMakeVar(ATMI_SRC ${CMAKE_SOURCE_DIR}/atmi-staging)
-if (EXISTS ${ATMI_SRC} AND NOT ${AMIT_ROOT})
+if (EXISTS ${ATMI_SRC} AND NOT AMIT_ROOT)
   set(ATMI_BUILD_FROM_SRC TRUE)
 endif()
 

@@ -22,9 +22,6 @@ ROCm.
   rocm-cmake
   rocm-dev
   rocm-device-libs
-  rocm-smi
-  rocm-smi-lib64
-  rocm-utils
 
 3. Optional packages
 
@@ -33,31 +30,64 @@ ROCm.
   hsa-amd-aqlprofile
   rocm-opencl
   rocm-opencl-dev
+  rocm-smi
+  rocm-smi-lib64
+  rocm-utils
 
 ## Building & Running
+
+### Building ATMI
+DAGEE builds on top of
+[ATMI](https://github.com/RadeonOpenCompute/atmi)](https://github.com/RadeonOpenCompute/atmi)
+
+Clone ATMI:
+
+```
+git clone https://github.com/RadeonOpenCompute/atmi
+```
+
+Create ATMI build directory:
+
+```
+cd atmi
+mkdir build
+cd build
+
+```
+
+Run cmake:
+
+```
+cmake ../src
+```
+
+Run make:
+
+```
+make -j
+```
+
+
+### Building DAGEE
 
 Clone this repository:
 
 ```
 $ git clone <this-repo's-url>
-$ git submodule update --init --recursive
 ```
 
 Create a build directory:
 
 ```
-$ mkdir build; cd build
+$ mkdir build 
+cd build
 ```
 
 Run CMake: 
 
 ```
-$ CXX=/opt/rocm/bin/hipcc cmake ..
+$ CXX=/opt/rocm/bin/hipcc cmake -DATMI_ROOT=<full-path-to-atmi-build-dir> ..
 ```
-- CMake build options are as follows (Not required if defaults are OK):
-  - ATMI_ROOT (default path /opt/rocm/atmi)
-If these defaults are correct, you can omit the options when running cmake: 
-
 
 Now you can compile the benchmarks
 
@@ -73,7 +103,7 @@ To run the benchmarks:
 ```
 
 ## Documentation
-We use Doxygen via `make doc` in the build directory to generate API documentation and a basic tutorial for DAGEE. 
+We use Doxygen. Run `make doc` in the build directory to generate API documentation and a basic tutorial for DAGEE in `<dagee-build-dir>/html`. 
 
 ## support
 This is a research project undergoing development. Please open a Github issue if
