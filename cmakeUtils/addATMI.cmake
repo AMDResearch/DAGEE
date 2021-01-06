@@ -7,9 +7,13 @@ defineCMakeVar(GFX_VER gfx900)
 # defineCMakeVar(ROCM_DEVICE_LIBS ${AMD_LLVM})
 
 defineCMakeVar(ATMI_SRC ${CMAKE_SOURCE_DIR}/atmi-staging)
-defineCMakeVar(ATMI_ROOT ${ATMI_SRC}) # default to submodule dir
+if (EXISTS ${ATMI_SRC} AND NOT ${AMIT_ROOT})
+  set(ATMI_BUILD_FROM_SRC TRUE)
+endif()
 
-if("xx${ATMI_ROOT}" STREQUAL "xx${ATMI_SRC}")
+defineCMakeVar(ATMI_ROOT /opt/rocm/atmi) # default to submodule dir
+
+if(ATMI_BUILD_FROM_SRC)
   # setting up ATMI's CMake options
   set(LLVM_DIR ${AMD_LLVM})
   # set(DEVICE_LIB_DIR ${ROCM_DEVICE_LIBS})

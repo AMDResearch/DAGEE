@@ -3,7 +3,7 @@
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmakeUtils/Modules/")
 
 macro(defineCMakeVar VARNAME DEFAULT_VAL)
-  if(NOT ${VARNAME})
+  if(NOT VARNAME)
     set(${VARNAME} ${DEFAULT_VAL})
     message(STATUS "${VARNAME} set to ${${VARNAME}}. To override, run cmake with -D${VARNAME}=BLAH")
   endif()

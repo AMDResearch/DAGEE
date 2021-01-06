@@ -11,7 +11,6 @@
 #include <vector>
 
 int main(int, char**) {
-
   constexpr unsigned threadsPerBlock = 1024;
   constexpr unsigned blocks = 16;
 
@@ -25,7 +24,6 @@ int main(int, char**) {
 
   using GpuExec = dagee::GpuExecutorAtmi;
   using DagExec = dagee::ATMIdagExecutor<GpuExec>;
-
 
   dagee::AllocManagerAtmi dbuf;
 
