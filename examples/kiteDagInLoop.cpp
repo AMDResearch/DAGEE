@@ -23,10 +23,10 @@ int main(int argc, char* argv[]) {
   std::vector<uint32_t> C(N, 0);
 
   std::cout << "info: copy Host2Device\n";
-  dagee::DeviceBufMgr dbuf;
-  auto A_d = dbuf.makeDeviceCopy(A);
-  auto B_d = dbuf.makeDeviceCopy(B);
-  auto C_d = dbuf.makeDeviceCopy(C);
+  dagee::DeviceBufMgr bufMgr;
+  auto A_d = bufMgr.makeDeviceCopy(A);
+  auto B_d = bufMgr.makeDeviceCopy(B);
+  auto C_d = bufMgr.makeDeviceCopy(C);
 
   using GpuExec = dagee::GpuExecutorAtmi;
   using DagExec = dagee::ATMIdagExecutor<GpuExec>;
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
   }
 
   std::cout << "info: copy Device2Host\n";
-  dbuf.copyToHost(A, A_d);
+  bufMgr.copyToHost(A, A_d);
 
   std::cout << "info: check result\n";
   bool passed = true;

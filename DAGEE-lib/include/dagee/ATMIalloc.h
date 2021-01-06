@@ -36,7 +36,7 @@ inline void atmiMemcpy(T* dstBuffer, const T* srcBuffer, const size_t numElems) 
                          reinterpret_cast<const void*>(srcBuffer), numElems * sizeof(T)));
 }
 template <typename AllocFactory = dagee::StdAllocatorFactory<> >
-class AllocManagerAtmiImpl {
+class AllocManagerAtmiImpl: public InitAtmiBase {
   using VecBuf = typename AllocFactory::template Vec<void*>;
 
   VecBuf mBufs;

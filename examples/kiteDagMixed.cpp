@@ -67,8 +67,8 @@ void sharedMemKiteDag() {
   dagee::CpuExecutorAtmi cpuEx;
   dagee::GpuExecutorAtmi gpuEx;
 
-  dagee::AllocManagerAtmi buf;
-  auto* A_h = buf.makeSharedCopy(A);
+  dagee::AllocManagerAtmi bufMgr;
+  auto* A_h = bufMgr.makeSharedCopy(A);
 
   auto topCpuK = cpuEx.registerKernel<uint32_t*, size_t>(&topKernCpu);
   auto midGpuK = gpuEx.registerKernel<uint32_t*, size_t>(&midKernGpu);
@@ -106,7 +106,7 @@ void sharedMemKiteDag() {
     std::cout << "Executing Kite DAG\n";
     dagEx.execute(dag);
   }
-  buf.copyBufferToVec(A, A_h);
+  bufMgr.copyBufferToVec(A, A_h);
   checkOutput(A);
 }
 
@@ -118,10 +118,10 @@ void memcpyKiteDag() {
   dagee::GpuExecutorAtmi gpuEx;
   dagee::MemCopyExecutorAtmi memEx;
 
-  dagee::AllocManagerAtmi buf;
+  dagee::AllocManagerAtmi bufMgr;
 
   auto* A_h = A.data();
-  auto* A_d = buf.makeDeviceCopy(A);
+  auto* A_d = bufMgr.makeDeviceCopy(A);
 
   auto topCpuK = cpuEx.registerKernel<uint32_t*, size_t>(&topKernCpu);
   auto midGpuK = gpuEx.registerKernel<uint32_t*, size_t>(&midKernGpu);

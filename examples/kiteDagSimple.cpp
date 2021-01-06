@@ -25,11 +25,11 @@ int main(int, char**) {
   using GpuExec = dagee::GpuExecutorAtmi;
   using DagExec = dagee::ATMIdagExecutor<GpuExec>;
 
-  dagee::AllocManagerAtmi dbuf;
+  dagee::AllocManagerAtmi bufMgr;
 
-  auto A_d = dbuf.makeDeviceCopy(A);
-  auto B_d = dbuf.makeDeviceCopy(B);
-  auto C_d = dbuf.makeDeviceCopy(C);
+  auto A_d = bufMgr.makeDeviceCopy(A);
+  auto B_d = bufMgr.makeDeviceCopy(B);
+  auto C_d = bufMgr.makeDeviceCopy(C);
 
   //! [DAGEE helloworld]
 
@@ -63,7 +63,7 @@ int main(int, char**) {
   //! [DAGEE helloworld]
 
   std::cout << "info: copy Device2Host\n";
-  dbuf.copyBufferToVec(A, A_d);
+  bufMgr.copyBufferToVec(A, A_d);
 
   checkOutput(A);
 

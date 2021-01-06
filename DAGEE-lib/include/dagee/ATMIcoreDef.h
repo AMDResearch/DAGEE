@@ -36,6 +36,17 @@ enum MemType : std::underlying_type<atmi_devtype_t>::type {
   // DSP = ATMI_DEVTYPE_DSP,
 };
 
+class InitAtmiBase {
+  void init() { CHECK_ATMI(atmi_init(ATMI_DEVTYPE_ALL)); }
+  void finish() { /*atmi_finalize();*/
+  } // TODO(amber/ashwin) FIXME: this causes a crash when invoked multiple times by different
+    // derived instances
+
+ public:
+  InitAtmiBase() { init(); }
+  ~InitAtmiBase() { finish(); }
+};
+
 namespace impl {
 
 template <typename I>

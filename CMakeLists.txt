@@ -11,6 +11,7 @@ endif()
 
 include(cmakeUtils/common.cmake)
 include(cmakeUtils/enableCompilerWarnings.cmake)
+include(CTest)
 
 
 set(CMAKE_CXX_STANDARD 11) # C++11...

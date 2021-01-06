@@ -26,12 +26,11 @@ void kiteDag() {
   using GpuExec = dagee::GpuExecutorAtmi;
   using DagExec = dagee::ATMIdagExecutor<GpuExec>;
 
+  dagee::AllocManagerAtmi bufMgr;
 
-  dagee::AllocManagerAtmi dbuf;
-
-  auto A_d = dbuf.makeDeviceCopy(A);
-  auto B_d = dbuf.makeDeviceCopy(B);
-  auto C_d = dbuf.makeDeviceCopy(C);
+  auto A_d = bufMgr.makeDeviceCopy(A);
+  auto B_d = bufMgr.makeDeviceCopy(B);
+  auto C_d = bufMgr.makeDeviceCopy(C);
 
   //![Eager Launch]
 
@@ -56,7 +55,7 @@ void kiteDag() {
     auto bottomTask = gpuEx.launchTask(
         gpuEx.makeTask(blocks, threadsPerBlock, bottomK, A_d, B_d, C_d, N), {leftTask, rightTask});
     gpuEx.waitOnTask(bottomTask);
-  //![Eager Launch]
+    //![Eager Launch]
 
   } else {
     std::cout << "Building Kite DAG\n";
@@ -81,7 +80,7 @@ void kiteDag() {
   }
 
   std::cout << "info: copy Device2Host\n";
-  dbuf.copyBufferToVec(A, A_d);
+  bufMgr.copyBufferToVec(A, A_d);
 
   checkOutput(A);
 }

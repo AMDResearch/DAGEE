@@ -84,17 +84,6 @@ struct HypotheticalExecutor {
   }
 };
 
-class InitAtmiBase {
-  void init() { CHECK_ATMI(atmi_init(ATMI_DEVTYPE_ALL)); }
-  void finish() { /*atmi_finalize();*/
-  } // TODO(amber/ashwin) FIXME: this causes a crash when invoked multiple times by different
-    // derived instances
-
- public:
-  InitAtmiBase() { init(); }
-  ~InitAtmiBase() { finish(); }
-};
-
 template <typename KernelRegPolicy, typename TaskLaunchPolicy>
 struct ExecutorSkeletonAtmi : public InitAtmiBase, public KernelRegPolicy, public TaskLaunchPolicy {
   using TaskInstance = typename TaskLaunchPolicy::TaskInstance;
