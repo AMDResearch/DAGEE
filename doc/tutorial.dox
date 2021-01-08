@@ -79,6 +79,22 @@ resource. We associate task types with Executors in a 1:1 fashion.
 Certain executors, such as, DAG executors are *meta* executors in DAGEE that wrap
 around other executors, such as, CPU or GPU executors. 
 
+### GPU Executor
+`dagee::GpuExecutorAtmi` is the executor for launching HIP kernels on a ROCm
+compatible GPU.  
+
+### CPU Executor
+`dagee::CpuExecutorAtmi` is the executor for launching CPU tasks. CPU tasks are
+free functions that can be launched with a three dimensional grid of CPU threads.
+See [examples/kiteDagCpu.cpp]
+
+### Memory/Data Copy Executor
+`dagee::MemCopyExecutorAtmi` is the executor for launching data copy tasks.
+The GPU visible buffers  for such tasks must be allocated using
+`dagee::AllocManagerAtmi` or using ATMI's memory allocation API's directly. In the
+future, we will provide mechanisms to register other buffers with DAGEE so that
+such buffers can be used in data-copy tasks
+
 ## Kernel Handles 
 
 Users must register compute kernels with an appropriate executor type via
