@@ -1,5 +1,32 @@
 // Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
+/**
+---------------------
+Important
+---------------------
+To compile (specifically to link) Device-Enque code, such as atmiDenq, steps are:
+1. Install aomp package from ROCm repos
+2. Build atmi with -DATMI_DEVICE_RUNTIME=On
+```
+cmake -DLLVM_DIR=/opt/rocm/aomp -DATMI_DEVICE_RUNTIME=On <path-to-atmi-src-dir>
+```
+
+3. Before running make for this example , export the following environment
+   variable (replace GFX900 with the architectural codename for your GPU. See
+`/opt/rocm/bin/rocminfo | grep Name`):
+
+```
+export HCC_EXTRA_LIBRARIES_GFX900=<ATMI_INSTALL_OR_BUILD_PATH>/lib/atmi-gfx900.amdgcn.bc
+```
+
+or
+
+```
+HCC_EXTRA_LIBRARIES=<ATMI_INSTALL_OR_BUILD_PATH>/lib/atmi-gfx900.amdgcn.bc make atmiDenq
+```
+
+*/
+
 #include "dagee/ATMIdagExecutor.h"
 #include "dagee/DeviceAlloc.h"
 
@@ -34,7 +61,7 @@ constexpr uint32_t FINAL_VAL = 3 * INIT_VAL + LEFT_ADD_VAL + RIGHT_ADD_VAL;
 
 __global__ uint32_t d_flag = 0;
 
-using Args = struct {
+struct Args {
   uint32_t* first_op;
   uint32_t* second_op;
   uint32_t* third_op;
@@ -134,6 +161,11 @@ __global__ void bottomKern(uint32_t* A_d, uint32_t* B_d, uint32_t* C_d, uint64_t
   if (i < N) {
     A_d[i] = A_d[i] + B_d[i] + C_d[i];
   }
+  /*
+  if (i == 0) {
+    atomicAdd(&d_flag, 1); // bump d_flag up to 3 to signal completion
+  }
+  */
 }
 
 int main(int argc, char* argv[]) {
@@ -141,6 +173,10 @@ int main(int argc, char* argv[]) {
   constexpr unsigned blocks = 16;
 
   constexpr uint64_t N = threadsPerBlock * blocks;
+
+  std::cout << "WARNING: Please read the build instructions in comments. Otherwise, the program "
+               "will build but not run"
+            << std::endl;
 
   std::vector<uint32_t> A(N, 0);
   std::vector<uint32_t> B(N, 0);
