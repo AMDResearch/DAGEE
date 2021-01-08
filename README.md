@@ -25,11 +25,10 @@ ROCm.
 
 3. Optional packages
 
+  aomp-amdgpu
   rocminfo
   rocprofiler-dev
   hsa-amd-aqlprofile
-  rocm-opencl
-  rocm-opencl-dev
   rocm-smi
   rocm-smi-lib64
   rocm-utils
