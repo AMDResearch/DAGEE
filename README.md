@@ -36,8 +36,7 @@ ROCm.
 ## Building & Running
 
 ### Building ATMI
-DAGEE builds on top of
-[ATMI](https://github.com/RadeonOpenCompute/atmi)](https://github.com/RadeonOpenCompute/atmi)
+DAGEE builds on top of [ATMI](https://github.com/RadeonOpenCompute/atmi)
 
 Clone ATMI:
 
@@ -104,6 +103,6 @@ To run the benchmarks:
 ## Documentation
 We use Doxygen. Run `make doc` in the build directory to generate API documentation and a basic tutorial for DAGEE in `<dagee-build-dir>/html`. 
 
-## support
+## Support
 This is a research project undergoing development. Please open a Github issue if
 you encounter a bug or a problem. 
