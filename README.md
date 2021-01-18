@@ -100,6 +100,21 @@ To run the benchmarks:
   ./examples/kiteDagGpu
 ```
 
+## Source Tree Organization
+- `DAGEE-lib`   : the source code for DAGEE library
+- `examples`    : some simple example code showing how DAGEE can be used
+- `cppUtils`    : helper C++ classes and functions
+- `tools`       : various scripts 
+- `cmakeUtils`  : cmake utility functions and scripts 
+- `doc`         : Source code for doxygen documentation
+
+## Using DAGEE With your project
+
+- Add `DAGEE-lib/include` and `cppUtils/include` to the compiler's include path
+- Add ATMI_ROOT/include to the compiler's include path
+- Link the executable with ATMI_BUILD/lib/libatmi_runtime.so
+
+
 ## Documentation
 We use Doxygen. Run `make doc` in the build directory to generate API documentation and a basic tutorial for DAGEE in `<dagee-build-dir>/html`. 
 
