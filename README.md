@@ -117,7 +117,7 @@ To run the benchmarks:
 - `cmakeUtils`  : cmake utility functions and scripts 
 - `doc`         : Source code for doxygen documentation
 
-## Using DAGEE With your project
+## Using DAGEE with your project
 
 - Add `DAGEE-lib/include` and `cppUtils/include` to the compiler's include path
 - Add ATMI_ROOT/include to the compiler's include path
