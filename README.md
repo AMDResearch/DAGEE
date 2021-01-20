@@ -1,14 +1,23 @@
 # DAGEE (Directed Acyclic Graph Execution Engine)
 
-DAGEE is a library for launching graphs of HIP Kernels, CPU functions and
-data-movement operations. It currently works only on AMD Hardware supported by
-ROCm.
+Directed Acyclic Graph Execution Engine (DAGEE) is a C++ library that enables
+programmers to express computation and data movement, as tasks in a graph
+structure, where edges represent task dependencies. Computation can be
+[HIP](https://github.com/ROCm-Developer-Tools/HIP) kernels
+on GPU and C++ functions on CPUs. DAGEE schedules tasks concurrently and
+asynchronously, at runtime, as soon as their dependencies are met, i.e., their
+preceding tasks finish execution. This is an emerging alternative to conventional
+GPU programming with HIP Streams that can lead to better performance due to
+improved concurrency, efficiency, and utilization of hardware resources. DAGEE
+builds on AMD Research’s [ATMI](https://github.com/RadeonOpenCompute/atmi) library, 
+and uses it for low-level scheduling and hardware management.
 
 ## Prerequisites
 
-1. Currently, DAGEE works with ROCm versions >= 2.0 and <= 3.3. We will start
+1. ROCm compatible hardware. See [ROCm Release Page](https://github.com/RadeonOpenCompute/ROCm#Hardware-and-Software-Support)
+2. Currently, DAGEE works with ROCm versions >= 2.0 and <= 3.3. We will start
    supporting latest ROCm versions in the near future.  
-2. Make sure following packages are installed (in addition to a basic ROCm installation). All these are available from ROCm DEB or RPM repos:
+3. Make sure following packages are installed (in addition to a basic ROCm installation). All these are available from ROCm DEB or RPM repos:
 
   atmi
   comgr
@@ -23,7 +32,7 @@ ROCm.
   rocm-dev
   rocm-device-libs
 
-3. Optional packages
+4. Optional packages
 
   aomp-amdgpu
   rocminfo
