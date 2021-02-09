@@ -14,13 +14,19 @@
 
 #include <algorithm>
 #include <mutex>
+#include <regex>
 #include <string>
+#include <sstream>
 #include <vector>
+#include <type_traits>
 
 namespace dagee {
 
-static constexpr const char PROC_SELF[] = "/proc/self/exe";
-static constexpr const char KERNEL_SECTION[] = ".kernel";
+  namespace impl {
+    static constexpr const char PROC_SELF[] = "/proc/self/exe";
+    // static constexpr const char KERNEL_SECTION[] = ".kernel";
+    static constexpr const char KERNEL_SECTION[] = ".hip_fatbin";
+  }
 
 template <typename P>
 static inline ELFIO::section* find_section_if(ELFIO::elfio& reader, P p) {
@@ -29,22 +35,25 @@ static inline ELFIO::section* find_section_if(ELFIO::elfio& reader, P p) {
   return it != reader.sections.end() ? *it : nullptr;
 }
 
-// Adopted from HIP/include/hip/hcc_detail/code_object_bundle.hpp
+// Adopted from HIP/src/rocclr/hip_code_object.cpp
 static constexpr char MAGIC_STR[] = "__CLANG_OFFLOAD_BUNDLE__";
 static constexpr auto MAGIC_STR_SZ = sizeof(MAGIC_STR) - 1;
 
 template <typename AllocF = dagee::StdAllocatorFactory<> >
 struct KernelSectionParser {
-  /**
-   * Each kernel section has a section header that contains the MAGIC_STR and number
-   * of code blobs per each ISA
-   */
-  union SectionHeader {
-    struct {
-      char mMagicStr[MAGIC_STR_SZ];
-      std::uint64_t mNumKernels;
-    };
-    char mCharBuf[sizeof(mMagicStr) + sizeof(mNumKernels)];
+  // Adopted from HIP/src/rocclr/hip_code_object.cpp
+  //Clang Offload bundler description & Header
+  struct ClangOffloadBundleDesc {
+    uint64_t mOffset;
+    uint64_t mSize;
+    uint64_t mTripleSize;
+    const char mTriple[1];
+  };
+
+  struct ClangOffloadBundleHeader {
+    const char mMagicStr[MAGIC_STR_SZ];
+    uint64_t mNumBundles;
+    ClangOffloadBundleDesc mDesc[1];
   };
 
   /**
@@ -56,27 +65,15 @@ struct KernelSectionParser {
 
     constexpr static const char* GPU_ISA_PAT = "gfx";
 
-    union Header {
-      struct {
-        std::uint64_t mOffset;   // the starting point wrt beginning of the kernel section
-        std::uint64_t mBlobSz;   // size of the bytes
-        std::uint64_t mTripleSz; // size of the triple ISA string
-      };
-      char mCharBuf[sizeof(mOffset) + sizeof(mBlobSz) + sizeof(mTripleSz)];
-    } mHeader;
-
     Str mTriple;
     Str mBytes;
 
-    bool mValid = false;
-
-    bool isValid(void) const { return mValid; }
-
-    bool isEmpty(void) const { return mHeader.mBlobSz == 0; }
-
     bool isGPU(void) const {
-      assert(isValid());
       return mTriple.find(GPU_ISA_PAT) != std::string::npos;
+    }
+
+    bool isEmpty() const noexcept { 
+      return mBytes.empty();
     }
 
     const char* data(void) const { return mBytes.data(); }
@@ -84,7 +81,6 @@ struct KernelSectionParser {
     const Str& triple(void) const { return mTriple; }
 
     size_t size(void) const {
-      assert(mBytes.size() == mHeader.mBlobSz);
       return mBytes.size();
     }
   };
@@ -94,46 +90,48 @@ struct KernelSectionParser {
   VecISAblobs mCodeBlobs;
   std::once_flag mOnceFlag;
 
-  bool isValid(const SectionHeader& secHead) const {
+  bool isValid(const ClangOffloadBundleHeader& secHead) const {
     return std::equal(MAGIC_STR, MAGIC_STR + MAGIC_STR_SZ, secHead.mMagicStr);
   }
 
   const VecISAblobs& codeBlobs(void) const { return mCodeBlobs; }
 
   template <typename I>
-  bool parseOneSection(const I& beg, const I& end) {
+  bool parseOneSection(const I& _beg, const I& _end) {
+
+    static_assert(std::is_same<I, const char*>::value, "param type must be char*");
+    const char* const beg = _beg;
+    const char* const end = _end;
+
     if (beg == end) {
       return false;
     }
 
-    SectionHeader secHead;
+    std::string magicStr(beg, MAGIC_STR_SZ);
+    assert(magicStr.compare(MAGIC_STR) == 0 && "invalid code blob. MAGIC_STR mismatch");
 
-    std::copy_n(beg, sizeof(secHead.mCharBuf), secHead.mCharBuf);
+    const auto* secHead = reinterpret_cast<const ClangOffloadBundleHeader*>(beg);
+    assert(isValid(*secHead));
 
-    if (isValid(secHead)) {
-      // std::cout << "Found mNumKernels = " << secHead.mNumKernels << std::endl;
+    if (isValid(*secHead)) {
 
-      auto cur = beg + sizeof(secHead.mCharBuf);
+      auto* desc = &secHead->mDesc[0];
+      for (uint64_t i = 0; i < secHead->mNumBundles; ++i) {
 
-      for (size_t i = 0; i < secHead.mNumKernels; ++i) {
-        mCodeBlobs.emplace_back(OneISAblob());
-        auto& blob = mCodeBlobs.back();
-        auto& h = blob.mHeader;
+        const char* blobPtr = reinterpret_cast<const char*>(
+            reinterpret_cast<uintptr_t>(beg) + desc->mOffset);
 
-        std::copy_n(cur, sizeof(h.mCharBuf), h.mCharBuf);
-        std::advance(cur, sizeof(h.mCharBuf));
+        if (desc->mSize > 0) {
+          mCodeBlobs.emplace_back(OneISAblob());
+          auto& blob = mCodeBlobs.back();
+          blob.mBytes.assign(blobPtr, blobPtr + desc->mSize); 
+          blob.mTriple.assign(&desc->mTriple[0], &desc->mTriple[0] + desc->mTripleSize);
 
-        blob.mTriple.assign(cur, cur + h.mTripleSz);
-        std::advance(cur, h.mTripleSz);
-
-        auto b = beg + h.mOffset;
-        auto e = b + h.mBlobSz;
-        blob.mBytes.assign(b, e);
-        blob.mValid = true;
-
-        // std::cout << "mOffset: " << h.mOffset << ", mBlobSz: " << h.mBlobSz
-        // << ", mTripleSz: " << h.mTripleSz
-        // << ", mTriple: " << blob.mTriple << std::endl;
+          // std::printf("triple=%s\n", blob.mTriple.c_str());
+        }
+        
+        desc = reinterpret_cast<const ClangOffloadBundleDesc*>(
+            reinterpret_cast<uintptr_t>(&desc->mTriple[0]) + desc->mTripleSize);
       }
 
       return true;
@@ -152,14 +150,14 @@ struct KernelSectionParser {
 
             const auto elf = (info->dlpi_addr && std::strlen(info->dlpi_name) != 0)
                                  ? info->dlpi_name
-                                 : PROC_SELF;
+                                 : impl::PROC_SELF;
 
             // std::cout << "Opening File: " << elf << std::endl;
 
             if (!reader.load(elf)) return 0;
 
             const auto it = find_section_if(
-                reader, [](const ELFIO::section* x) { return x->get_name() == KERNEL_SECTION; });
+                reader, [](const ELFIO::section* x) { return x->get_name() == impl::KERNEL_SECTION; });
 
             if (!it) return 0;
 
@@ -172,6 +170,11 @@ struct KernelSectionParser {
     });
   }
 };
+
+namespace impl {
+  constexpr static const char  KERNEL_STUB_FUNC_PREFIX[] = "__device_stub__";
+  constexpr static const size_t KERNEL_STUB_PREFIX_LENGTH = sizeof(KERNEL_STUB_FUNC_PREFIX) - 1;
+}
 
 template <typename AllocF = dagee::StdAllocatorFactory<> >
 class KernelPtrToNameLookup {
@@ -201,6 +204,68 @@ class KernelPtrToNameLookup {
     return r;
   }
 
+  static bool isStubFunction(const std::string& name) {
+    return name.find(impl::KERNEL_STUB_FUNC_PREFIX) != std::string::npos;
+  }
+
+  static void printMatches(std::smatch& sm) {
+
+    std::printf("prefix = %s\n", sm.prefix().str().c_str());
+    for (size_t i = 0; i < sm.size(); ++i) {
+      std::printf("group %zu, value = %s\n", i, sm.str(i).c_str());
+    }
+    std::printf("suffix = %s\n", sm.suffix().str().c_str());
+  }
+
+  static std::string convStubToKernelName(const std::string& name) {
+    assert(isStubFunction(name));
+
+    /**
+     * HIP-Clang gneerates a stub function for each unique kernel function
+     * The stub is named as <name_scope>__device_stub__<kernelName>(kernel param signature)
+     * <name_scope> refers to the namespace and class etc. that encloses the kernel function
+     * In the binary this stub shows up as a mangled name of the form
+     * <mangled-name-scope><func name length>__device_stub__<kernelName><mangled signature>
+     * So we remove the prefix __device_stub__ and adjust the function name length to
+     * generate mangled name for the original kernel function
+     */
+
+    // split into 3 parts. Prefix, KERNEL_STUB_FUNC_PREFIX, suffix
+    std::regex stubRegex(impl::KERNEL_STUB_FUNC_PREFIX);
+    std::smatch sm;
+    if (std::regex_search(name, sm, stubRegex)) {
+      auto mangledPrefixWithLength = sm.prefix().str(); // this should be everything until KERNEL_STUB_FUNC_PREFIX. First group in regex, enclosed by ().
+      auto kernNameWithoutStub = sm.suffix().str(); // stuff after KERNEL_STUB_FUNC_PREFIX
+      
+      std::smatch smNumbers;
+      size_t len = 0;
+      std::string mangledPrefix;
+      if (std::regex_search(mangledPrefixWithLength, smNumbers, std::regex("[0-9]+$"))) {
+        // printMatches(smNumbers);
+
+        mangledPrefix = smNumbers.prefix();
+
+        // last group has the length of kernel with stub
+        len = std::stoi(smNumbers.str());
+        // compute  new length
+        assert(len > impl::KERNEL_STUB_PREFIX_LENGTH);
+        len -= impl::KERNEL_STUB_PREFIX_LENGTH;
+
+      } else {
+        std::abort();
+      }
+     
+      // std::printf("name = %s, len = %zu\n", name.c_str(), len);
+
+      std::stringstream ss;
+      ss << mangledPrefix << len << kernNameWithoutStub;
+      return ss.str();
+    }
+
+    std::abort(); // couldn't match
+    return "";
+  }
+
   void function_names_for(const ELFIO::elfio& reader, ELFIO::section* symtab,
                           ELFIO::section* textSec, VecPairPtrStr& names) {
     ELFIO::symbol_section_accessor symbols{reader, symtab};
@@ -221,8 +286,11 @@ class KernelPtrToNameLookup {
         continue;
       }
       // std::cout << "name = " << s.name << ", section_index = " << s.sect_idx << std::endl;
-
-      names.emplace_back(s.value, s.name);
+      if(isStubFunction(s.name)) {
+        auto kernelName = convStubToKernelName(s.name);
+        // std::printf("Converted %s to %s\n", s.name.c_str(), kernelName.c_str());
+        names.emplace_back(s.value, kernelName);
+      } 
     }
   }
 
@@ -233,7 +301,7 @@ class KernelPtrToNameLookup {
             ELFIO::elfio reader;
             const auto elf = (info->dlpi_addr && std::strlen(info->dlpi_name) != 0)
                                  ? info->dlpi_name
-                                 : PROC_SELF;
+                                 : impl::PROC_SELF;
 
             if (!reader.load(elf)) {
               return 0;

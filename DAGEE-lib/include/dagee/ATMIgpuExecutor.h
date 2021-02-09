@@ -124,11 +124,10 @@ struct GpuKernelRegAtmiPolicy {
     } else {
       const auto& name = mKernPtrLookup.name(fptr);
 
-      // std::cout << "Kernel name is: " << name << std::endl;
-
       atmi_kernel_t kernel;
       constexpr const unsigned numArgs = sizeof...(Args);
       size_t argSizes[] = {sizeof(Args)...};
+      // std::printf("kernel name lookup = %s\n", name.c_str());
       CHECK_ATMI(atmi_kernel_create(&kernel, numArgs, argSizes, 1, ATMI_DEVTYPE_GPU, name.c_str()));
 
       mGpuKernels.insert(kiter, std::make_pair(fptr, kernel));

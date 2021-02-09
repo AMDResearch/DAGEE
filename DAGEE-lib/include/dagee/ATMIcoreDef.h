@@ -107,8 +107,10 @@ ATMIlaunchParam initLaunchParam() {
   lp.groupDim[0] = 1;
   lp.groupDim[1] = 1;
   lp.groupDim[2] = 1;
-  lp.acquire_scope = ATMI_FENCE_SCOPE_DEVICE;
-  lp.release_scope = ATMI_FENCE_SCOPE_DEVICE;
+  // TODO(amber) FIXME: use ATMI_FENCE_SCOPE_DEVICE for internal nodes in a DAG
+  // while ATMI_FENCE_SCOPE_SYSTEM for sink nodes
+  lp.acquire_scope = ATMI_FENCE_SCOPE_SYSTEM;
+  lp.release_scope = ATMI_FENCE_SCOPE_SYSTEM;
 
   lp.atmi_id = ATMI_VRM;
   lp.kernel_id = 0;

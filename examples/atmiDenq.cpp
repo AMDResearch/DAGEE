@@ -1,5 +1,7 @@
 // Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
+// TODO(amber) FIXME: the instructions below don't work for ROCm 4.0 (More likely ROCm 3.5 onwards)
+
 /**
 ---------------------
 Important
