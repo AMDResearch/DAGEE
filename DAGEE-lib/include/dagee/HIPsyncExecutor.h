@@ -7,7 +7,7 @@
 #include "dagee/DeviceAlloc.h"
 #include "dagee/DummyKernel.h"
 
-#include "util/Print.h"
+#include "cpputils/Print.h"
 
 #include "hip/hip_runtime.h"
 
@@ -25,7 +25,7 @@ struct HIPsyncExecutor : public DeviceBufferManager<AllocFactory> {
   template <typename S>
   explicit HIPsyncExecutor(const S& name) : DeviceAllocBase(), mNumTasks(0), mName(name) {}
 
-  ~HIPsyncExecutor(void) { util::printStat(mName, "Num Tasks", mNumTasks); }
+  ~HIPsyncExecutor(void) { cpputils::printStat(mName, "Num Tasks", mNumTasks); }
 
   template <typename F, typename... Args>
   void launchSyncTask(const dim3& blocks, const dim3& threadsPerBlock, const F& f, Args... args) {

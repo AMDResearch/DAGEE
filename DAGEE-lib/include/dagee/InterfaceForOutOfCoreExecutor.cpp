@@ -5,8 +5,8 @@ int main() {
   std::vector<PartData> hostData;
 
   gt::OutOfCoreATMIexecutor ex;
-  ex.addKernel<types...>(kernelFunc0);
-  ex.addKernel<types...>(kernelFunc1);
+  ex.registerKernel<types...>(kernelFunc0);
+  ex.registerKernel<types...>(kernelFunc1);
 
   ex.makeDeviceDataBuffers(hostData[0], numBuffers); // based on some budget
 

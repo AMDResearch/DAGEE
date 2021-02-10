@@ -8,7 +8,7 @@
 #include "dagee/DeviceAlloc.h"
 #include "dagee/DummyKernel.h"
 
-#include "util/Print.h"
+#include "cpputils/Print.h"
 
 #include <string>
 
@@ -35,8 +35,8 @@ struct SingleDAGexecutor : public ATMIdagExecutor<Exec, AllocFactory>,
 
   ~SingleDAGexecutor(void) {
     auto p = mDAG->size();
-    util::printStat(mName, "Num Tasks", p.first);
-    util::printStat(mName, "DAG Edges", p.second);
+    cpputils::printStat(mName, "Num Tasks", p.first);
+    cpputils::printStat(mName, "DAG Edges", p.second);
   }
 
   template <typename A, typename... Args>
