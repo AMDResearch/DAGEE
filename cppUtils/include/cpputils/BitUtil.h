@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstdint>
 
 namespace cpputils {
 
@@ -14,9 +15,9 @@ struct BitUtil {
   constexpr static const size_t NUM_BITS = 8 * NUM_BYTES;
 
  private:
-  static void checkBitIndex(size_t idx) { assert(idx < NUM_BITS && "invalid bit idx"); }
+  static void checkBitIndex(size_t idx) noexcept { assert(idx < NUM_BITS && "invalid bit idx"); }
 
-  static void checkBitRange(size_t lo, size_t hi) {
+  static void checkBitRange(size_t lo, size_t hi) noexcept {
     checkBitIndex(lo);
     assert(hi > 0 && hi <= NUM_BITS && "invalid hi idx for range");
   }
@@ -25,28 +26,28 @@ struct BitUtil {
   /**
    * masks off the upper bits [idx+1:NUM_BITS) and returns the result
    */
-  static W maskUpper(const W& word, size_t idx) { return word & ~(~W(0) << idx); }
+  static W maskUpper(const W& word, size_t idx) noexcept { return word & ~(~W(0) << idx); }
 
   /**
    * masks off the lower bits [0..idx+1) and returns the result
    */
-  static W maskLower(const W& word, size_t idx) { return word & (~W(0) << idx); }
+  static W maskLower(const W& word, size_t idx) noexcept { return word & (~W(0) << idx); }
 
-  static W getLSB(const W& word) { return word & W(1); }
+  static W getLSB(const W& word) noexcept { return word & W(1); }
 
-  static W genMask(size_t lo, size_t hi) {
+  static W genMask(size_t lo, size_t hi) noexcept {
     W mask = ~(~W(0) << (hi - lo));
     mask <<= lo;
     return mask;
   }
 
-  static W getBit(const W& word, size_t idx) {
+  static W getBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     return (word >> idx) & W(1);
   }
 
   // hi is non inclusive, just like begin and end iterators in V++
-  static W getBitRange(const W& word, size_t lo, size_t hi) {
+  static W getBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     assert(hi > lo && "invalid bit range");
     auto x = (word >> lo); // shift the range to LSB
@@ -56,7 +57,7 @@ struct BitUtil {
   // TODO: create a template + tuple based version that does not require a runtime loop
   // bitIndices has bits ordered from lsb to msb
   template <typename V>
-  static W getBits(const W& word, const V& bitIndices) {
+  static W getBits(const W& word, const V& bitIndices) noexcept {
     W res = 0;
     unsigned idx = 0;
     for (auto i : bitIndices) {
@@ -67,18 +68,18 @@ struct BitUtil {
     return res;
   }
 
-  static W setBitRange(const W& word, size_t lo, size_t hi) {
+  static W setBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     return (word | genMask(lo, hi));
   }
 
-  static W setBit(const W& word, size_t idx) {
+  static W setBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     return word | (W(1) << idx);
   }
 
   template <typename V>
-  static W setBits(const W& word, const V& bitIndices) {
+  static W setBits(const W& word, const V& bitIndices) noexcept {
     W ret = word;
 
     for (const auto& i : bitIndices) {
@@ -87,19 +88,19 @@ struct BitUtil {
     return ret;
   }
 
-  static W clearBitRange(const W& word, size_t lo, size_t hi) {
+  static W clearBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     return word & ~genMask(lo, hi);
   }
 
-  static W clearBit(const W& word, size_t idx) {
+  static W clearBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     W mask = ~(W(1) << idx);
     return word & mask;
   }
 
   template <typename V>
-  static W clearBits(const W& word, const V& bitIndices) {
+  static W clearBits(const W& word, const V& bitIndices) noexcept {
     W ret = word;
 
     for (auto i : bitIndices) {
@@ -108,7 +109,7 @@ struct BitUtil {
     return ret;
   }
 
-  static W removeBitRange(const W& word, size_t lo, size_t hi) {
+  static W removeBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     if (lo == 0) {
       return word >> hi;
@@ -120,7 +121,7 @@ struct BitUtil {
     return upper | lower;
   }
 
-  static W removeBit(const W& word, size_t idx) {
+  static W removeBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     return removeBitRange(word, idx, idx + 1);
   }
@@ -136,7 +137,7 @@ struct BitUtil {
   // represent it would look like 00101000. However, elements of innerBitIndices would be
   // 00000111, 00010000, 11000000. If we OR these elements we would get 11010111 = ~00101000.
   template <typename V>
-  static W removeBitsByInnerBits(const W& word, const V& innerBitIndices) {
+  static W removeBitsByInnerBits(const W& word, const V& innerBitIndices) noexcept {
     W ret = W(0);
     size_t idx = 0;
     for (auto i : innerBitIndices) {
@@ -157,7 +158,7 @@ struct BitUtil {
    * assumes that bitIndices are sorted low to high idx
    */
   template <typename V>
-  static W removeBits(const W& word, const V& bitIndices) {
+  static W removeBits(const W& word, const V& bitIndices) noexcept {
     W res = word;
     size_t shiftAmt = 0;
     for (auto i : bitIndices) {
@@ -175,7 +176,7 @@ struct BitUtil {
     return res;
   }
 
-  static W insertBitRange(const W& word, size_t lo, size_t hi) {
+  static W insertBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     /*
      * algorithm: get the subsets [0:lo+1) and [lo:MSB)
@@ -191,7 +192,7 @@ struct BitUtil {
     return (upper | lower);
   }
 
-  static W insertBit(const W& word, size_t idx) {
+  static W insertBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     return insertBitRange(word, idx, idx + 1);
   }
@@ -200,7 +201,7 @@ struct BitUtil {
   // capture the right set of bits from word and shift them appropriately to insert bits at
   // the right locations.
   template <typename V>
-  static W insertBitsByInnerBits(const W& word, const V& innerBitIndices) {
+  static W insertBitsByInnerBits(const W& word, const V& innerBitIndices) noexcept {
     W ret = W(0);
     size_t idx = 0;
     for (auto i : innerBitIndices) {
@@ -217,7 +218,7 @@ struct BitUtil {
    * because we shift left to make space for the new bits
    */
   template <typename V>
-  static W insertBits(const W& word, const V& bitIndices) {
+  static W insertBits(const W& word, const V& bitIndices) noexcept {
     W ret = word;
     for (auto i : bitIndices) {
       ret = insertBit(ret, i);
@@ -225,7 +226,7 @@ struct BitUtil {
     return ret;
   }
 
-  static W replaceBitRange(const W& word, size_t lo, size_t hi, const W& newVal) {
+  static W replaceBitRange(const W& word, size_t lo, size_t hi, const W& newVal) noexcept {
     checkBitRange(lo, hi);
     W ret = clearBitRange(word, lo, hi);
     W nv = maskUpper(newVal, (hi - lo));
@@ -233,7 +234,7 @@ struct BitUtil {
     return (ret | nv);
   }
 
-  static W replaceBit(const W& word, size_t idx, const W& newVal) {
+  static W replaceBit(const W& word, size_t idx, const W& newVal) noexcept {
     checkBitIndex(idx);
     W ret = clearBit(word, idx);
     W nv = getLSB(newVal);
@@ -242,7 +243,7 @@ struct BitUtil {
   }
 
   template <typename V>
-  static W replaceBits(const W& word, const V& bitIndices, const W& newVal) {
+  static W replaceBits(const W& word, const V& bitIndices, const W& newVal) noexcept {
     W ret = word;
     W nval = newVal;
 
@@ -251,6 +252,133 @@ struct BitUtil {
       nval >>= 1;
     }
     return ret;
+  }
+};
+
+template <typename T>
+class BitUtil<T*> {
+
+  using Int = uint64_t;
+  using IntBitUtil = BitUtil<Int>;
+  using P = T*;
+
+  static Int toInt(P ptr) noexcept {
+    return reinterpret_cast<Int>(ptr);
+  }
+  
+  static P toPtr(Int i) noexcept {
+    return reinterpret_cast<P>(i);
+  }
+
+public:
+
+  using pointer = P;
+
+  constexpr static const auto NUM_BYTES = IntBitUtil::NUM_BYTES;
+  constexpr static const auto NUM_BITS = IntBitUtil::NUM_BITS;
+
+  static P maskUpper(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::maskUpper(toInt(ptr), idx));
+  }
+
+  static P maskLower(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::maskLower(toInt(ptr), idx));
+  }
+
+  static P getLSB(const P& ptr) noexcept {
+    return toPtr(IntBitUtil::getLSB(toInt(ptr)));
+  }
+
+  static P genMask(size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::genMask(lo, hi));
+  }
+
+  static P getBit(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::getBit(toInt(ptr), idx));
+  }
+
+  static P getBitRange(const P& ptr, size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::getBitRange(toInt(ptr), lo, hi));
+  }
+
+  template <typename V>
+  static P getBits(const P& ptr, const V& bitIndices) noexcept {
+    return toPtr(IntBitUtil::getBits(toInt(ptr), bitIndices));
+  }
+
+  static P setBit(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::setBit(toInt(ptr), idx));
+  }
+
+  static P setBitRange(const P& ptr, size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::setBitRange(toInt(ptr), lo, hi));
+  }
+
+  template <typename V>
+  static P setBits(const P& ptr, const V& bitIndices) noexcept {
+    return toPtr(IntBitUtil::setBits(toInt(ptr), bitIndices));
+  }
+
+  static P clearBit(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::clearBit(toInt(ptr), idx));
+  }
+
+  static P clearBitRange(const P& ptr, size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::clearBitRange(toInt(ptr), lo, hi));
+  }
+
+  template <typename V>
+  static P clearBits(const P& ptr, const V& bitIndices) noexcept {
+    return toPtr(IntBitUtil::clearBits(toInt(ptr), bitIndices));
+  }
+  
+  static P replaceBit(const P& ptr, size_t idx, const P& newVal) noexcept {
+    return toPtr(IntBitUtil::replaceBit(toInt(ptr), idx, toInt(newVal)));
+  }
+
+  static P replaceBitRange(const P& ptr, size_t lo, size_t hi, const P& newVal) noexcept {
+    return toPtr(IntBitUtil::replaceBitRange(toInt(ptr), lo, hi, toInt(newVal)));
+  }
+
+  template <typename V>
+  static P replaceBits(const P& ptr, const V& bitIndices, const P& newVal) noexcept {
+    return toPtr(IntBitUtil::replaceBits(toInt(ptr), bitIndices, toInt(newVal)));
+  }
+
+  static P removeBit(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::removeBit(toInt(ptr), idx));
+  }
+
+  static P removeBitRange(const P& ptr, size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::removeBitRange(toInt(ptr), lo, hi));
+  }
+
+  template <typename V>
+  static P removeBits(const P& ptr, const V& bitIndices) noexcept {
+    return toPtr(IntBitUtil::removeBits(toInt(ptr), bitIndices));
+  }
+
+  template <typename V>
+  static P removeBitsByInnerBits(const P& ptr, const V& innerBitIndices) noexcept {
+    return toPtr(IntBitUtil::removeBitsByInnerBits(toInt(ptr), innerBitIndices));
+  }
+
+  static P insertBit(const P& ptr, size_t idx) noexcept {
+    return toPtr(IntBitUtil::insertBit(toInt(ptr), idx));
+  }
+
+  static P insertBitRange(const P& ptr, size_t lo, size_t hi) noexcept {
+    return toPtr(IntBitUtil::insertBitRange(toInt(ptr), lo, hi));
+  }
+
+  template <typename V>
+  static P insertBits(const P& ptr, const V& bitIndices) noexcept {
+    return toPtr(IntBitUtil::insertBits(toInt(ptr), bitIndices));
+  }
+
+  template <typename V>
+  static P insertBitsByInnerBits(const P& ptr, const V& innerBitIndices) noexcept {
+    return toPtr(IntBitUtil::insertBitsByInnerBits(toInt(ptr), innerBitIndices));
   }
 };
 

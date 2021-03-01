@@ -4,7 +4,7 @@
 
 #include <unistd.h>
 
-#include "util/Timer.h"
+#include "cpputils/Timer.h"
 
 void doSleep(int sec) { sleep(sec); }
 
@@ -20,20 +20,20 @@ int main(int argc, char* argv[]) {
   constexpr const bool USE_MICRO_SECONDS = true;
 
   if (USE_MICRO_SECONDS) {
-    util::CppTimer<> cppTimer("CPP", "usleep", true);
+    cpputils::CppTimer<> cppTimer("CPP", "usleep", true);
     doUsleep(inputDuration);
     cppTimer.stop();
 
-    util::CTimer<> cTimer("C", "usleep", true);
+    cpputils::CTimer<> cTimer("C", "usleep", true);
     doUsleep(inputDuration);
     cTimer.stop();
 
   } else {
-    util::CppTimer<> cppTimer("CPP", "sleep", true);
+    cpputils::CppTimer<> cppTimer("CPP", "sleep", true);
     doSleep(inputDuration);
     cppTimer.stop();
 
-    util::CTimer<> cTimer("C", "sleep", true);
+    cpputils::CTimer<> cTimer("C", "sleep", true);
     doSleep(inputDuration);
     cTimer.stop();
   }

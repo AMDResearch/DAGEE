@@ -20,9 +20,7 @@ and uses it for low-level scheduling and hardware management.
 
   atmi
   comgr
-  hcc
   hip-base
-  hip-hcc
   hsa-ext-rocr-dev
   hsa-rocr-dev
   hsakmt-roct
@@ -33,18 +31,18 @@ and uses it for low-level scheduling and hardware management.
 
 4. Optional packages
 
-  aomp-amdgpu
   rocminfo
   rocprofiler-dev
   hsa-amd-aqlprofile
   rocm-smi
-  rocm-smi-lib64
   rocm-utils
 
 ## Building & Running
 
-### Building ATMI
-DAGEE builds on top of [ATMI](https://github.com/RadeonOpenCompute/atmi)
+### Building 
+DAGEE builds on top of [ATMI](https://github.com/RadeonOpenCompute/atmi). We
+recommend cloning the ATMI source repo instead of installing `atmi` deb/rpm
+package to get the latest updates. 
 
 Clone ATMI:
 
@@ -52,34 +50,11 @@ Clone ATMI:
 git clone https://github.com/RadeonOpenCompute/atmi
 ```
 
-Create ATMI build directory:
-
-```
-cd atmi
-mkdir build
-cd build
-
-```
-
-Run cmake:
-
-```
-cmake ../src
-```
-
-Run make:
-
-```
-make -j
-```
-
-
-### Building DAGEE
 
 Clone this repository:
 
 ```
-$ git clone <this-repo's-url>
+$ git clone <path-to-dagee>
 ```
 
 Create a build directory:
@@ -92,7 +67,7 @@ cd build
 Run CMake: 
 
 ```
-$ CXX=/opt/rocm/bin/hipcc cmake -DATMI_ROOT=<full-path-to-atmi-build-dir> ..
+$ CXX=/opt/rocm/bin/hipcc cmake -DATMI_SRC=<absolute-path-to-atmi-repo-dir> ..
 ```
 
 Now you can compile the benchmarks
@@ -102,6 +77,12 @@ $ make -j
 ```
 
 To run the benchmarks: 
+
+```
+ctest
+```
+
+Or, individually ,e.g.:
 
 ```
   ./examples/kiteDagCpu

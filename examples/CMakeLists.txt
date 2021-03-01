@@ -12,7 +12,6 @@ addDageeTarget(kiteDagCpu kiteDagCpu.cpp)
 addDageeTarget(kiteDagMixed kiteDagMixed.cpp)
 addDageeTarget(kiteDagInLoop kiteDagInLoop.cpp)
 addDageeTarget(nameManglingVariants nameManglingVariants.cpp)
+addDageeTarget(atmiDenq atmiDenq.cpp)
 
-# FIXME TODO(amber) commenting out for now because it doesn't work with ROCm 4.0
-# add_executable(atmiDenq atmiDenq.cpp)
-# buildWithATMI(atmiDenq)
+set_property(TARGET atmiDenq PROPERTY COMPILE_FLAGS "-Xclang -mlink-builtin-bitcode -Xclang ${ATMI_ROOT}/lib/atmi-${GFX_VER}.bc")

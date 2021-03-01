@@ -12,7 +12,7 @@
 # - remove d1 and d2
 
 DEV_DIR="$HOME/projects/DAGEE-examples"
-REL_DIR="$HOME/projects/DAGEE-release-RO"
+REL_DIR="$HOME/projects/DAGEE"
 
 ## TODO: clone to tmp dirs
 

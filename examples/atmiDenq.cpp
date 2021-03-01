@@ -1,34 +1,5 @@
 // Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
-// TODO(amber) FIXME: the instructions below don't work for ROCm 4.0 (More likely ROCm 3.5 onwards)
-
-/**
----------------------
-Important
----------------------
-To compile (specifically to link) Device-Enque code, such as atmiDenq, steps are:
-1. Install aomp package from ROCm repos
-2. Build atmi with -DATMI_DEVICE_RUNTIME=On
-```
-cmake -DLLVM_DIR=/opt/rocm/aomp -DATMI_DEVICE_RUNTIME=On <path-to-atmi-src-dir>
-```
-
-3. Before running make for this example , export the following environment
-   variable (replace GFX900 with the architectural codename for your GPU. See
-`/opt/rocm/bin/rocminfo | grep Name`):
-
-```
-export HCC_EXTRA_LIBRARIES_GFX900=<ATMI_INSTALL_OR_BUILD_PATH>/lib/atmi-gfx900.amdgcn.bc
-```
-
-or
-
-```
-HCC_EXTRA_LIBRARIES=<ATMI_INSTALL_OR_BUILD_PATH>/lib/atmi-gfx900.amdgcn.bc make atmiDenq
-```
-
-*/
-
 #include "dagee/ATMIdagExecutor.h"
 #include "dagee/DeviceAlloc.h"
 
@@ -61,7 +32,7 @@ constexpr uint32_t LEFT_ADD_VAL = 2;
 constexpr uint32_t RIGHT_ADD_VAL = 3;
 constexpr uint32_t FINAL_VAL = 3 * INIT_VAL + LEFT_ADD_VAL + RIGHT_ADD_VAL;
 
-__global__ uint32_t d_flag = 0;
+__device__ uint32_t d_flag = 0;
 
 struct Args {
   uint32_t* first_op;

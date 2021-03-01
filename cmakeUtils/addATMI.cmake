@@ -1,9 +1,9 @@
 # Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
 include(cmakeUtils/addHSA.cmake)
-defineCMakeVar(AMD_LLVM /opt/rocm/aomp)
+defineCMakeVar(AMD_LLVM /opt/rocm/llvm)
 defineCMakeVar(GFX_VER gfx900)
-# defineCMakeVar(ROCM_DEVICE_LIBS /opt/rocm/opencl/lib/x86_64/bitcode)
+defineCMakeVar(ROCM_DEVICE_LIBS /opt/rocm/amdgcn/bitcode)
 # defineCMakeVar(ROCM_DEVICE_LIBS ${AMD_LLVM})
 
 defineCMakeVar(ATMI_SRC ${CMAKE_SOURCE_DIR}/atmi-staging)
@@ -14,14 +14,15 @@ endif()
 defineCMakeVar(ATMI_ROOT /opt/rocm/atmi) # default to submodule dir
 
 if(ATMI_BUILD_FROM_SRC)
+  set(ATMI_ROOT ${CMAKE_BINARY_DIR}/atmi)
   # setting up ATMI's CMake options
   set(LLVM_DIR ${AMD_LLVM})
   # set(DEVICE_LIB_DIR ${ROCM_DEVICE_LIBS})
   set(ATMI_DEVICE_RUNTIME ON)
   # invoke src/CMakeLists.txt
-  add_subdirectory(${ATMI_SRC}/src)
+  add_subdirectory(${ATMI_SRC}/src ${ATMI_ROOT})
   # set variables for apps to use ATMI
-  set(ATMI_INCLUDE_DIRS ${ATMI_SRC}/include)
+  set(ATMI_INCLUDE_DIRS ${ATMI_ROOT}/include)
   set(ATMI_LIBRARIES atmi_runtime) # same lib name as found in ${ATMI_SRC}/runtime/core/CMakeLists.txt
 else()
   # if ATMI_ROOT is defined at cmake cmd line, we use find_package to set
@@ -90,8 +91,8 @@ function(compileCL2GCN target clfile)
 
   set(AMDGPU_TARGET_TRIPLE amdgcn-amd-amdhsa) 
   set(CL_OPTS  "${CL_OPTS} -O2 -v ${CL_INC_DIR_FLAGS}")
-  # set(CLOC_OPTS -vv -opt 2 -aomp ${AMD_LLVM} -triple ${AMDGPU_TARGET_TRIPLE} -mcpu ${GFX_VER} -libgcn ${ROCM_DEVICE_LIBS} -atmipath ${ATMI_ROOT})
-  set(CLOC_OPTS -vv -opt 2 -aomp ${AMD_LLVM} -triple ${AMDGPU_TARGET_TRIPLE} -mcpu ${GFX_VER} -atmipath ${ATMI_ROOT})
+  set(CLOC_OPTS -vv -opt 2 -aomp ${AMD_LLVM} -triple ${AMDGPU_TARGET_TRIPLE} -mcpu ${GFX_VER} -libgcn ${ROCM_DEVICE_LIBS} -atmipath ${ATMI_ROOT})
+  # set(CLOC_OPTS -vv -opt 2 -aomp ${AMD_LLVM} -triple ${AMDGPU_TARGET_TRIPLE} -mcpu ${GFX_VER} -atmipath ${ATMI_ROOT})
 
 
   set(OUTFILE ${clfile}.hsaco)
