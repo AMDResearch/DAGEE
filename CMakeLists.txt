@@ -9,9 +9,11 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+include(CTest)
+
 include(cmakeUtils/common.cmake)
 include(cmakeUtils/enableCompilerWarnings.cmake)
-include(CTest)
+include(cmakeUtils/rocmDeps.cmake)
 
 
 set(CMAKE_CXX_STANDARD 11) # C++11...
@@ -21,9 +23,6 @@ set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 if(CMAKE_CXX_COMPILER MATCHES "hipcc")
   set(HAVE_HIP ON)
 endif()
-
-include(cmakeUtils/addATMI.cmake)
-include(cmakeUtils/rocmVersion.cmake)
 
 defineCMakeVar(DAGEE_ROOT "DAGEE-lib")
 

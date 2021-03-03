@@ -1,6 +1,6 @@
 # Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
-defineCMakeVar(HSA_ROOT /opt/rocm)
+defineCMakeVar(HSA_ROOT ${ROCM_ROOT})
 
 find_package(HSA)
 
