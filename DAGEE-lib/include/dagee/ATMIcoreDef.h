@@ -56,9 +56,9 @@ void waitOnTasks(const I& taskHbeg, const I& taskHend) {
   }
 }
 
-void waitOnTasks(std::initializer_list<ATMItaskHandle> l) { waitOnTasks(l.begin(), l.end()); }
+inline void waitOnTasks(std::initializer_list<ATMItaskHandle> l) { waitOnTasks(l.begin(), l.end()); }
 
-void waitOnTask(const ATMItaskHandle& t) { atmi_task_wait(t); }
+inline void waitOnTask(const ATMItaskHandle& t) { atmi_task_wait(t); }
 
 template <typename I>
 void activateTasks(const I& taskHbeg, const I& taskHend) {
@@ -67,9 +67,9 @@ void activateTasks(const I& taskHbeg, const I& taskHend) {
   }
 }
 
-void activateTasks(std::initializer_list<ATMItaskHandle> l) { activateTasks(l.begin(), l.end()); }
+inline void activateTasks(std::initializer_list<ATMItaskHandle> l) { activateTasks(l.begin(), l.end()); }
 
-void activateTask(const ATMItaskHandle& t) { atmi_task_activate(t); }
+inline void activateTask(const ATMItaskHandle& t) { atmi_task_activate(t); }
 
 inline atmi_mem_place_t initMemPlaceAtmi(MemType memType) {
   atmi_mem_place_t place;
@@ -97,9 +97,9 @@ T initLparamCparam() {
   return param;
 }
 
-ATMIcopyParam initCopyParam() { return initLparamCparam<ATMIcopyParam>(); }
+inline ATMIcopyParam initCopyParam() { return initLparamCparam<ATMIcopyParam>(); }
 
-ATMIlaunchParam initLaunchParam() {
+inline ATMIlaunchParam initLaunchParam() {
   ATMIlaunchParam lp = initLparamCparam<ATMIlaunchParam>();
   lp.gridDim[0] = 1;
   lp.gridDim[1] = 1;
