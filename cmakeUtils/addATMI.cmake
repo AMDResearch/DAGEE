@@ -1,8 +1,9 @@
 # Copyright (c) 2018-Present Advanced Micro Devices, Inc. See LICENSE.TXT for terms.
 
-defineCMakeVar(AMD_LLVM ${ROCM_ROOT}/llvm)
+include(cmakeUtils/addHSA.cmake)
+defineCMakeVar(AMD_LLVM /opt/rocm/llvm)
 defineCMakeVar(GFX_VER gfx900)
-defineCMakeVar(ROCM_DEVICE_LIBS ${ROCM_ROOT}/amdgcn/bitcode)
+defineCMakeVar(ROCM_DEVICE_LIBS /opt/rocm/amdgcn/bitcode)
 # defineCMakeVar(ROCM_DEVICE_LIBS ${AMD_LLVM})
 
 defineCMakeVar(ATMI_SRC ${CMAKE_SOURCE_DIR}/atmi-staging)
@@ -10,7 +11,7 @@ if (EXISTS ${ATMI_SRC} AND NOT ATMI_ROOT)
   set(ATMI_BUILD_FROM_SRC TRUE)
 endif()
 
-defineCMakeVar(ATMI_ROOT ${ROCM_ROOT}/atmi) # default to submodule dir
+defineCMakeVar(ATMI_ROOT /opt/rocm/atmi) # default to submodule dir
 
 if(ATMI_BUILD_FROM_SRC)
   set(ATMI_ROOT ${CMAKE_BINARY_DIR}/atmi)

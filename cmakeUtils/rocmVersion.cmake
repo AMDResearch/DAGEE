@@ -2,12 +2,10 @@
 
 # provides cmake variables and compiler definitions for rocm versions
 
-defineCMakeVar(ROCM_ROOT /opt/rocm)
-
 if(NOT ROCM_VERSION)
   file(GLOB version_files
       LIST_DIRECTORIES false
-      ${ROCM_ROOT}/.info/version*
+      /opt/rocm/.info/version*
       )
   list(GET version_files 0 version_file)
   # Compute the version
@@ -19,7 +17,7 @@ if(NOT ROCM_VERSION)
       ERROR_STRIP_TRAILING_WHITESPACE
       )
   if(NOT _rocm_error)
-    set(ROCM_VERSION ${_rocm_version} CACHE STRING "Version of ROCm as found in ${ROCM_ROOT}/.info/version*")
+    set(ROCM_VERSION ${_rocm_version} CACHE STRING "Version of ROCm as found in /opt/rocm/.info/version*")
   else()
     set(ROCM_VERSION "0.0.0" CACHE STRING "Version of ROCm set to default")
   endif()
