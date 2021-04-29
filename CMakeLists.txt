@@ -11,6 +11,7 @@ endif()
 
 include(cmakeUtils/common.cmake)
 include(cmakeUtils/enableCompilerWarnings.cmake)
+include(cmakeUtils/rocmDeps.cmake)
 include(CTest)
 
 
@@ -21,9 +22,6 @@ set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 if(CMAKE_CXX_COMPILER MATCHES "hipcc")
   set(HAVE_HIP ON)
 endif()
-
-include(cmakeUtils/addATMI.cmake)
-include(cmakeUtils/rocmVersion.cmake)
 
 defineCMakeVar(DAGEE_ROOT "DAGEE-lib")
 
