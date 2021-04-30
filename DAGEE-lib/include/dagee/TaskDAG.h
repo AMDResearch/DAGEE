@@ -210,8 +210,8 @@ template <typename D, typename AllocFactory = dagee::StdAllocatorFactory<>, bool
           bool STORE_SUCC = false>
 struct DAGbase {
  public:
-  using WithSucc = DAGbase<D, AllocFactory, true, false>;
-  using WithPred = DAGbase<D, AllocFactory, false, true>;
+  using WithPred = DAGbase<D, AllocFactory, true, false>;
+  using WithSucc = DAGbase<D, AllocFactory, false, true>;
   using WithPredSucc = DAGbase<D, AllocFactory, true, true>;
   template <typename AF>
   using withAllocFactory = DAGbase<D, AF, STORE_PRED, STORE_SUCC>;

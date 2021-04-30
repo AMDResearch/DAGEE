@@ -78,6 +78,8 @@ struct KernelSectionParser {
 
     const char* data(void) const { return mBytes.data(); }
 
+    const Str& bytes() const { return mBytes; }
+
     const Str& triple(void) const { return mTriple; }
 
     size_t size(void) const {

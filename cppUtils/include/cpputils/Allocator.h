@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <vector>
+#include <type_traits>
 
 namespace cpputils {
 
@@ -20,7 +21,7 @@ class AlignedAllocator : public std::allocator<T> {
 
  public:
   explicit AlignedAllocator(size_t alignment) noexcept : Base(), mAlign(alignment) {
-    assert(mAlign & 3 == 0 && "lowest alignment must be at least 4 bytes");
+    assert((mAlign & 3ul) == 0 && "lowest alignment must be at least 4 bytes");
   }
 
   T* allocate(size_t n) const noexcept { return aligned_alloc(mAlign, n); }
@@ -52,8 +53,8 @@ private:
 
   using Pool = std::vector<T>;
 
+  FactoryT& mFactory;
   Pool mResPool;
-  FactoryT mFactory;
 
 
   void replenish() noexcept {
@@ -78,9 +79,9 @@ private:
 
 public:
 
-  explicit ResourcePool(FactoryT&& factory = FactoryT()) noexcept: 
-    mResPool(),
-    mFactory(std::forward<T>(factory))
+  explicit ResourcePool(FactoryT& factory) noexcept: 
+    mFactory(factory),
+    mResPool()
   {
     init();
   }
@@ -121,8 +122,14 @@ namespace impl {
 }
 
 template <typename T, typename StaticFactoryT, size_t BATCH_SIZE_T>
-using ResourcePoolStaticFactory = 
-  ResourcePool<T, impl::StaticFactoryWrapper<T, StaticFactoryT>, BATCH_SIZE_T>;
+struct ResourcePoolStaticFactory: public ResourcePool<T, impl::StaticFactoryWrapper<T, StaticFactoryT>, BATCH_SIZE_T> {
+  using SFW = impl::StaticFactoryWrapper<T, StaticFactoryT>;
+  using Base = ResourcePool<T, SFW, BATCH_SIZE_T>;
+  SFW mStaticFactory;
+
+  // FIXME: passing a reference to mStaticFactory before it is constructed
+  ResourcePoolStaticFactory(): Base(mStaticFactory), mStaticFactory() {}
+};
 
 
 } // end namespace cpputils

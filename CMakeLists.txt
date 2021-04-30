@@ -32,6 +32,7 @@ endif()
 include_directories(cppUtils/include)
 
 add_subdirectory(examples)
+add_subdirectory(dagrTests)
 
 ################ doxygen documentation cmake setup ############
 # list all the dirs for doxygen documentaiton

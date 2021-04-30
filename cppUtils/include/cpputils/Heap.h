@@ -68,7 +68,7 @@ class FixedSizeHeapImpl {
 
     auto* beg = bigBlk.begin();
     auto* end = bigBlk.end();
-    for (auto* i = begin; (i+mAllocSz) <= end; i += mAllocSz) {
+    for (auto* i = beg; (i+mAllocSz) <= end; i += mAllocSz) {
       mFreeBlocks.emplace_back(i, i + mAllocSz);
     }
   }
