@@ -15,18 +15,18 @@
 #include <algorithm>
 #include <mutex>
 #include <regex>
-#include <string>
 #include <sstream>
-#include <vector>
+#include <string>
 #include <type_traits>
+#include <vector>
 
 namespace dagee {
 
-  namespace impl {
-    static constexpr const char PROC_SELF[] = "/proc/self/exe";
-    // static constexpr const char KERNEL_SECTION[] = ".kernel";
-    static constexpr const char KERNEL_SECTION[] = ".hip_fatbin";
-  }
+namespace impl {
+static constexpr const char PROC_SELF[] = "/proc/self/exe";
+// static constexpr const char KERNEL_SECTION[] = ".kernel";
+static constexpr const char KERNEL_SECTION[] = ".hip_fatbin";
+} // namespace impl
 
 template <typename P>
 static inline ELFIO::section* find_section_if(ELFIO::elfio& reader, P p) {
@@ -38,11 +38,12 @@ static inline ELFIO::section* find_section_if(ELFIO::elfio& reader, P p) {
 // Adopted from HIP/src/rocclr/hip_code_object.cpp
 static constexpr char MAGIC_STR[] = "__CLANG_OFFLOAD_BUNDLE__";
 static constexpr auto MAGIC_STR_SZ = sizeof(MAGIC_STR) - 1;
+static constexpr uint64_t MAGIC_STR_ALIGNMENT = 8ul;
 
 template <typename AllocF = dagee::StdAllocatorFactory<> >
 struct KernelSectionParser {
   // Adopted from HIP/src/rocclr/hip_code_object.cpp
-  //Clang Offload bundler description & Header
+  // Clang Offload bundler description & Header
   struct ClangOffloadBundleDesc {
     uint64_t mOffset;
     uint64_t mSize;
@@ -68,13 +69,9 @@ struct KernelSectionParser {
     Str mTriple;
     Str mBytes;
 
-    bool isGPU(void) const {
-      return mTriple.find(GPU_ISA_PAT) != std::string::npos;
-    }
+    bool isGPU(void) const { return mTriple.find(GPU_ISA_PAT) != std::string::npos; }
 
-    bool isEmpty() const noexcept { 
-      return mBytes.empty();
-    }
+    bool isEmpty() const noexcept { return mBytes.empty(); }
 
     const char* data(void) const { return mBytes.data(); }
 
@@ -82,9 +79,7 @@ struct KernelSectionParser {
 
     const Str& triple(void) const { return mTriple; }
 
-    size_t size(void) const {
-      return mBytes.size();
-    }
+    size_t size(void) const { return mBytes.size(); }
   };
 
   using VecISAblobs = typename AllocF::template Vec<OneISAblob>;
@@ -96,48 +91,71 @@ struct KernelSectionParser {
     return std::equal(MAGIC_STR, MAGIC_STR + MAGIC_STR_SZ, secHead.mMagicStr);
   }
 
+  template <typename T>
+  T* alignUp(T* ptr, std::size_t alignment) const {
+    return reinterpret_cast<T*>(((reinterpret_cast<uint64_t>(ptr) + alignment - 1) / alignment) *
+                                alignment);
+  }
+
   const VecISAblobs& codeBlobs(void) const { return mCodeBlobs; }
 
   template <typename I>
-  bool parseOneSection(const I& _beg, const I& _end) {
-
+  bool parseOneSection(const I& beg, const I& end) {
     static_assert(std::is_same<I, const char*>::value, "param type must be char*");
-    const char* const beg = _beg;
-    const char* const end = _end;
 
-    if (beg == end) {
+    // The section (.hip_fatbin) may have multiple code blobs demarcated by the
+    // MAGIC_STR symbol, so we collect all code blobs between begin and end.
+    // The code to loop over all code blobs and track last code blob bundle offsets
+    // and sizes is inspired by rocm/bin/extractkernel
+    const auto* secHead = reinterpret_cast<const ClangOffloadBundleHeader*>(beg);
+    const auto* secTail = reinterpret_cast<const ClangOffloadBundleHeader*>(end);
+    if (secHead == secTail) {
       return false;
     }
 
-    std::string magicStr(beg, MAGIC_STR_SZ);
-    assert(magicStr.compare(MAGIC_STR) == 0 && "invalid code blob. MAGIC_STR mismatch");
+    bool foundValidCodeBlob = false;
 
-    const auto* secHead = reinterpret_cast<const ClangOffloadBundleHeader*>(beg);
-    assert(isValid(*secHead));
+    while (secHead < secTail) {
+      // adjust the code blob offset in the section to the code blob alignment
+      secHead = alignUp(secHead, MAGIC_STR_ALIGNMENT);
+      assert(isValid(*secHead) && "invalid code blob. MAGIC_STR mismatch");
 
-    if (isValid(*secHead)) {
+      // track the last code blob bundle entry within the code blob
+      uint64_t lastBundleOffset = 0ul;
+      uint64_t lastBundleSize = 0ul;
 
-      auto* desc = &secHead->mDesc[0];
-      for (uint64_t i = 0; i < secHead->mNumBundles; ++i) {
+      if (isValid(*secHead)) {
+        auto* desc = &secHead->mDesc[0];
+        for (uint64_t i = 0; i < secHead->mNumBundles; ++i) {
+          const char* blobPtr =
+              reinterpret_cast<const char*>(reinterpret_cast<uintptr_t>(secHead) + desc->mOffset);
 
-        const char* blobPtr = reinterpret_cast<const char*>(
-            reinterpret_cast<uintptr_t>(beg) + desc->mOffset);
+          lastBundleOffset = std::max(desc->mOffset, lastBundleOffset);
+          if (lastBundleOffset == desc->mOffset) lastBundleSize = desc->mSize;
+          if (desc->mSize > 0) {
+            mCodeBlobs.emplace_back(OneISAblob());
+            auto& blob = mCodeBlobs.back();
+            blob.mBytes.assign(blobPtr, blobPtr + desc->mSize);
+            blob.mTriple.assign(&desc->mTriple[0], &desc->mTriple[0] + desc->mTripleSize);
 
-        if (desc->mSize > 0) {
-          mCodeBlobs.emplace_back(OneISAblob());
-          auto& blob = mCodeBlobs.back();
-          blob.mBytes.assign(blobPtr, blobPtr + desc->mSize); 
-          blob.mTriple.assign(&desc->mTriple[0], &desc->mTriple[0] + desc->mTripleSize);
+            // std::printf("triple=%s\n", blob.mTriple.c_str());
+          }
 
-          // std::printf("triple=%s\n", blob.mTriple.c_str());
+          // go to the next code blob bundle entry
+          desc = reinterpret_cast<const ClangOffloadBundleDesc*>(
+              reinterpret_cast<uintptr_t>(&desc->mTriple[0]) + desc->mTripleSize);
         }
-        
-        desc = reinterpret_cast<const ClangOffloadBundleDesc*>(
-            reinterpret_cast<uintptr_t>(&desc->mTriple[0]) + desc->mTripleSize);
+
+        // we need to find at least one valid code blob to return true
+        foundValidCodeBlob = true;
       }
 
-      return true;
+      // go to the next code blob
+      secHead = reinterpret_cast<const ClangOffloadBundleHeader*>(
+          reinterpret_cast<uintptr_t>(secHead) + lastBundleOffset + lastBundleSize);
     }
+
+    if (foundValidCodeBlob) return true;
 
     assert(false && "Failed to read the kernel section in ELF");
 
@@ -158,8 +176,9 @@ struct KernelSectionParser {
 
             if (!reader.load(elf)) return 0;
 
-            const auto it = find_section_if(
-                reader, [](const ELFIO::section* x) { return x->get_name() == impl::KERNEL_SECTION; });
+            const auto it = find_section_if(reader, [](const ELFIO::section* x) {
+              return x->get_name() == impl::KERNEL_SECTION;
+            });
 
             if (!it) return 0;
 
@@ -174,9 +193,9 @@ struct KernelSectionParser {
 };
 
 namespace impl {
-  constexpr static const char  KERNEL_STUB_FUNC_PREFIX[] = "__device_stub__";
-  constexpr static const size_t KERNEL_STUB_PREFIX_LENGTH = sizeof(KERNEL_STUB_FUNC_PREFIX) - 1;
-}
+constexpr static const char KERNEL_STUB_FUNC_PREFIX[] = "__device_stub__";
+constexpr static const size_t KERNEL_STUB_PREFIX_LENGTH = sizeof(KERNEL_STUB_FUNC_PREFIX) - 1;
+} // namespace impl
 
 template <typename AllocF = dagee::StdAllocatorFactory<> >
 class KernelPtrToNameLookup {
@@ -211,7 +230,6 @@ class KernelPtrToNameLookup {
   }
 
   static void printMatches(std::smatch& sm) {
-
     std::printf("prefix = %s\n", sm.prefix().str().c_str());
     for (size_t i = 0; i < sm.size(); ++i) {
       std::printf("group %zu, value = %s\n", i, sm.str(i).c_str());
@@ -236,9 +254,11 @@ class KernelPtrToNameLookup {
     std::regex stubRegex(impl::KERNEL_STUB_FUNC_PREFIX);
     std::smatch sm;
     if (std::regex_search(name, sm, stubRegex)) {
-      auto mangledPrefixWithLength = sm.prefix().str(); // this should be everything until KERNEL_STUB_FUNC_PREFIX. First group in regex, enclosed by ().
+      auto mangledPrefixWithLength =
+          sm.prefix().str(); // this should be everything until KERNEL_STUB_FUNC_PREFIX. First group
+                             // in regex, enclosed by ().
       auto kernNameWithoutStub = sm.suffix().str(); // stuff after KERNEL_STUB_FUNC_PREFIX
-      
+
       std::smatch smNumbers;
       size_t len = 0;
       std::string mangledPrefix;
@@ -256,7 +276,7 @@ class KernelPtrToNameLookup {
       } else {
         std::abort();
       }
-     
+
       // std::printf("name = %s, len = %zu\n", name.c_str(), len);
 
       std::stringstream ss;
@@ -288,11 +308,11 @@ class KernelPtrToNameLookup {
         continue;
       }
       // std::cout << "name = " << s.name << ", section_index = " << s.sect_idx << std::endl;
-      if(isStubFunction(s.name)) {
+      if (isStubFunction(s.name)) {
         auto kernelName = convStubToKernelName(s.name);
         // std::printf("Converted %s to %s\n", s.name.c_str(), kernelName.c_str());
         names.emplace_back(s.value, kernelName);
-      } 
+      }
     }
   }
 
