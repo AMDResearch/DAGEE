@@ -57,6 +57,7 @@ void checkOutput(const V& A) {
     std::cout << "OK. Output check passed" << std::endl;
   } else {
     std::cerr << "ERROR. Output check failed" << std::endl;
+    std::abort();
   }
 }
 
