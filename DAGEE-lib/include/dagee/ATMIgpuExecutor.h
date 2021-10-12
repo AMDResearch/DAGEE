@@ -9,7 +9,9 @@
 
 namespace dagee {
 
-using ATMIgpuKernelInfo = atmi_kernel_t;
+struct ATMIgpuKernelInfo {
+  atmi_kernel_t mKern;
+};
 
 // TODO(amber): Store mKernArgOffsets as part of ATMIgpuKernelInfo
 template <typename AllocFactory>
@@ -65,7 +67,7 @@ struct GpuKernelRegAtmiPolicy {
  protected:
   using KernPtrLookup = KernelPtrToNameLookup<AllocFactory>;
 
-  using KernelInfoMap = typename AllocFactory::template HashMap<GenericFuncPtr, KernelInfo>;
+  using KernelInfoMap = typename AllocFactory::template HashMap<GenericFuncPtr, atmi_kernel_t>;
 
   KernPtrLookup mKernPtrLookup;
 
@@ -119,7 +121,7 @@ struct GpuKernelRegAtmiPolicy {
     auto kiter = mGpuKernels.find(fptr);
 
     if (kiter != mGpuKernels.cend()) {
-      return kiter->second;
+      return KernelInfo{ kiter->second };
 
     } else {
       const auto& name = mKernPtrLookup.name(fptr);
@@ -132,7 +134,7 @@ struct GpuKernelRegAtmiPolicy {
 
       mGpuKernels.insert(kiter, std::make_pair(fptr, kernel));
 
-      return kernel;
+      return KernelInfo{ kernel };
     }
   }
 };
@@ -163,12 +165,17 @@ struct GpuKernelLaunchAtmiPolicy {
     return lp;
   }
 
-  static ATMIkernelHandle kernelHandle(const TaskInstance& ti) { return ti.mKernInfo; }
+  static ATMIkernelHandle kernelHandle(const TaskInstance& ti) { return ti.mKernInfo.mKern; }
 
   template <typename... Args>
   static TaskInstance makeTask(const dim3& blocks, const dim3& threadsPerBlock,
                                const KernelInfo& kinfo, Args&&... args) {
     return TaskInstance(blocks, threadsPerBlock, kinfo, std::forward<Args>(args)...);
+  }
+
+  template <typename... Args>
+  static TaskInstance makeTask(const dim3& threads, const KernelInfo& kinfo, Args&&... args) {
+    return makeTask(1, threads, kinfo, std::forward<Args>(args)...);
   }
 };
 

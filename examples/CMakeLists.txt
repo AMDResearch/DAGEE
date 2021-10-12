@@ -4,6 +4,10 @@ function(addDageeTarget EXE_NAME SRC_NAME)
   add_executable(${EXE_NAME} ${SRC_NAME})
   buildWithATMI(${EXE_NAME})
   add_test(${EXE_NAME} ${EXE_NAME})
+  # FIXME TODO(ashwin): disable SDMA because there seems to be a bug specifically
+  # with device-to-host copies (for certain buffer sizes). Remove the below line
+  # when the bug gets fixed.
+  set_tests_properties(${EXE_NAME} PROPERTIES ENVIRONMENT HSA_ENABLE_SDMA=0)
 endfunction()
 
 addDageeTarget(kiteDagSimple kiteDagSimple.cpp)

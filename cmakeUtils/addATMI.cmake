@@ -18,6 +18,9 @@ if(ATMI_BUILD_FROM_SRC)
   set(LLVM_DIR ${AMD_LLVM})
   # set(DEVICE_LIB_DIR ${ROCM_DEVICE_LIBS})
   set(ATMI_DEVICE_RUNTIME ON)
+  # pass through ROCm/HSA root dir to be consistent with ATMI
+  set(ROCM_DIR ${ROCM_ROOT})
+  set(ENV{GFXLIST} "${GFX_VER}")
   # invoke src/CMakeLists.txt
   add_subdirectory(${ATMI_SRC}/src ${ATMI_ROOT})
   # set variables for apps to use ATMI

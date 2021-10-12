@@ -68,6 +68,19 @@ struct BitUtil {
     return res;
   }
 
+  static W getBitsByMask(const W& word, const W& mask) noexcept {
+    W res = 0;
+    unsigned idx = 0;
+    for (auto i = 0; i < NUM_BITS; ++i) {
+      if (getBit(mask, i)) {
+        W temp = getBit(word, i);
+        res = res | (temp << idx);
+        ++idx;
+      }
+    }
+    return res;
+  }
+
   static W setBitRange(const W& word, size_t lo, size_t hi) noexcept {
     checkBitRange(lo, hi);
     return (word | genMask(lo, hi));
@@ -84,6 +97,17 @@ struct BitUtil {
 
     for (const auto& i : bitIndices) {
       ret = setBit(ret, i);
+    }
+    return ret;
+  }
+
+  static W setBitsByMask(const W& word, const W& mask) noexcept {
+    W ret = word;
+
+    for (auto i = 0; i < NUM_BITS; ++i) {
+      if (getBit(mask, i)) {
+        ret = setBit(ret, i);
+      }
     }
     return ret;
   }
@@ -154,6 +178,26 @@ struct BitUtil {
     return ret;
   }
 
+  static W removeBitsByMask(const W& word, const W& mask) noexcept {
+    W res = word;
+    size_t shiftAmt = 0;
+    for (auto i = 0; i < NUM_BITS; ++i) {
+      if (getBit(mask, i)) {
+        res = removeBit(res, i);
+        /*
+         * since bitIndices are sorted, removing a lower order bit changes the
+         * positions of higher order bits, so higher bitIndices are off by 1
+         * So, we left shift by 1 to make higher bitIndices valid, but ++shiftAmt to
+         * remember how many zeros we added on the right and remove them
+         */
+        res <<= 1;
+        ++shiftAmt;
+      }
+    }
+    res >>= shiftAmt; // remove the zeroes we added to adjust for higher bitIndices
+    return res;
+  }
+
   /**
    * assumes that bitIndices are sorted low to high idx
    */
@@ -195,6 +239,16 @@ struct BitUtil {
   static W insertBit(const W& word, size_t idx) noexcept {
     checkBitIndex(idx);
     return insertBitRange(word, idx, idx + 1);
+  }
+
+  static W insertBitsByMask(const W& word, const W& mask) noexcept {
+    W ret = word;
+    for (auto i = 0; i < NUM_BITS; ++i) {
+      if (getBit(mask, i)) {
+        ret = insertBit(ret, i);
+      }
+    }
+    return ret;
   }
 
   // This does the opposite of removeBitsByInnerBits. It uses each element of innerBitIndices to
@@ -253,6 +307,19 @@ struct BitUtil {
     }
     return ret;
   }
+
+  static W replaceBitsByMask(const W& word, const W& mask, const W& newVal) noexcept {
+    W ret = word;
+    W nval = newVal;
+
+    for (auto i = 0; i < NUM_BITS; ++i) {
+      if (getBit(mask, i)) {
+        ret = replaceBit(ret, i, getLSB(nval));
+        nval >>= 1;
+      }
+    }
+    return ret;
+  }
 };
 
 template <typename T>
@@ -306,6 +373,10 @@ public:
     return toPtr(IntBitUtil::getBits(toInt(ptr), bitIndices));
   }
 
+  static P getBitsByMask(const P& ptr, Int mask) noexcept {
+    return toPtr(IntBitUtil::getBitsByMask(toInt(ptr), mask));
+  }
+
   static P setBit(const P& ptr, size_t idx) noexcept {
     return toPtr(IntBitUtil::setBit(toInt(ptr), idx));
   }
@@ -317,6 +388,10 @@ public:
   template <typename V>
   static P setBits(const P& ptr, const V& bitIndices) noexcept {
     return toPtr(IntBitUtil::setBits(toInt(ptr), bitIndices));
+  }
+
+  static P setBitsByMask(const P& ptr, Int mask) noexcept {
+    return toPtr(IntBitUtil::setBits(toInt(ptr), mask));
   }
 
   static P clearBit(const P& ptr, size_t idx) noexcept {
@@ -345,6 +420,10 @@ public:
     return toPtr(IntBitUtil::replaceBits(toInt(ptr), bitIndices, toInt(newVal)));
   }
 
+  static P replaceBitsByMask(const P& ptr, Int mask, const P& newVal) noexcept {
+    return toPtr(IntBitUtil::replaceBitsByMask(toInt(ptr), mask, toInt(newVal)));
+  }
+
   static P removeBit(const P& ptr, size_t idx) noexcept {
     return toPtr(IntBitUtil::removeBit(toInt(ptr), idx));
   }
@@ -356,6 +435,10 @@ public:
   template <typename V>
   static P removeBits(const P& ptr, const V& bitIndices) noexcept {
     return toPtr(IntBitUtil::removeBits(toInt(ptr), bitIndices));
+  }
+  
+  static P removeBitsByMask(const P& ptr, Int mask) noexcept {
+    return toPtr(IntBitUtil::removeBitsByMask(toInt(ptr), mask));
   }
 
   template <typename V>
@@ -374,6 +457,10 @@ public:
   template <typename V>
   static P insertBits(const P& ptr, const V& bitIndices) noexcept {
     return toPtr(IntBitUtil::insertBits(toInt(ptr), bitIndices));
+  }
+
+  static P insertBitsByMask(const P& ptr, Int mask) noexcept {
+    return toPtr(IntBitUtil::insertBitsByMask(toInt(ptr), mask));
   }
 
   template <typename V>
